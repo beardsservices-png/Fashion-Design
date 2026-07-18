@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>Style Studio 3D — Fashion Design</title>
+<style>
+  :root{
+    --bg:#0e0f13; --panel:#16181f; --panel2:#1d2029; --line:#2a2e3a;
+    --ink:#eef0f6; --muted:#8a90a2; --accent:#e0b15a; --accent2:#c4436a;
+    --ok:#5ad19a;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden}
+  body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+  .app{display:grid;grid-template-rows:auto 1fr;height:100vh}
+
+  header{display:flex;align-items:center;gap:14px;padding:10px 16px;background:linear-gradient(180deg,#191b22,#121319);
+    border-bottom:1px solid var(--line);z-index:10}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand .mk{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-weight:800;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));color:#151318}
+  .brand h1{font-size:16px;margin:0;letter-spacing:3px;font-weight:700}
+  .brand small{display:block;font-size:9.5px;letter-spacing:3px;color:var(--muted);text-transform:uppercase}
+  .sp{flex:1}
+  .tbtn{border:1px solid var(--line);background:#1b1e27;color:var(--ink);padding:8px 13px;border-radius:9px;
+    font-weight:600;font-size:12.5px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:.15s;white-space:nowrap}
+  .tbtn:hover{border-color:var(--accent);color:var(--accent)}
+  .tbtn.on{border-color:var(--accent);color:var(--accent);background:#221f18}
+  .tbtn.primary{background:linear-gradient(135deg,var(--accent),#d99b3e);color:#151318;border:none}
+  .tbtn.primary:hover{color:#151318;filter:brightness(1.06)}
+
+  main{position:relative;display:grid;grid-template-columns:210px 1fr 320px;min-height:0}
+  #view{position:relative;background:radial-gradient(120% 90% at 50% 15%,#20222c 0%,#101116 55%,#0a0b0e 100%)}
+  #c{display:block;width:100%;height:100%}
+  .viewhud{position:absolute;left:14px;bottom:12px;color:var(--muted);font-size:11.5px;letter-spacing:.4px;pointer-events:none}
+  .viewhud b{color:#c9cede}
+
+  .side{background:var(--panel);overflow-y:auto;border-right:1px solid var(--line)}
+  .side.right{border-right:none;border-left:1px solid var(--line)}
+  .side::-webkit-scrollbar{width:9px}.side::-webkit-scrollbar-thumb{background:#2a2e3a;border-radius:9px}
+  .sec{padding:12px 13px;border-bottom:1px solid var(--line)}
+  .sec h2{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin:0 0 9px}
+
+  .garmentbtns{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .gbtn{border:1px solid var(--line);background:#1b1e27;border-radius:10px;padding:12px 6px;cursor:pointer;text-align:center;
+    transition:.15s;display:flex;flex-direction:column;align-items:center;gap:6px}
+  .gbtn svg{width:26px;height:26px;stroke:#9aa0b2;fill:none;stroke-width:1.6}
+  .gbtn span{font-size:11px;color:var(--muted);font-weight:600}
+  .gbtn:hover{border-color:var(--accent2)}
+  .gbtn.active{border-color:var(--accent);background:#221f18}
+  .gbtn.active span{color:var(--accent)}.gbtn.active svg{stroke:var(--accent)}
+
+  .tabs{display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap}
+  .tab{flex:1;border:1px solid var(--line);background:#1b1e27;color:var(--muted);border-radius:8px;padding:7px 4px;
+    font-size:11px;font-weight:700;cursor:pointer;text-align:center;letter-spacing:.5px}
+  .tab.active{border-color:var(--accent);color:var(--accent);background:#221f18}
+
+  .field{margin-bottom:12px}
+  .field label{display:block;font-size:10.5px;font-weight:700;color:var(--muted);letter-spacing:.6px;margin-bottom:5px;text-transform:uppercase}
+  .opts{display:flex;flex-wrap:wrap;gap:5px}
+  .opt{border:1px solid var(--line);background:#1b1e27;color:#c4c9d6;border-radius:7px;padding:6px 10px;font-size:11.5px;
+    font-weight:600;cursor:pointer;transition:.12s}
+  .opt:hover{border-color:var(--accent2)}
+  .opt.active{border-color:var(--accent);color:var(--accent);background:#221f18}
+
+  .swatches{display:grid;grid-template-columns:repeat(8,1fr);gap:5px}
+  .sw{width:100%;padding-bottom:100%;border-radius:6px;cursor:pointer;position:relative;border:2px solid transparent;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+  .sw.active{border-color:#fff;transform:scale(1.06)}
+  .crow{display:flex;align-items:center;gap:8px;margin-top:8px}
+  input[type=color]{width:40px;height:30px;border:1px solid var(--line);border-radius:7px;background:#1b1e27;cursor:pointer;padding:2px}
+  input[type=range]{width:100%;accent-color:var(--accent)}
+  .rangeval{font-size:11px;color:var(--muted);float:right}
+
+  .looks{display:flex;gap:9px;overflow-x:auto;padding-bottom:4px}
+  .look{flex:0 0 auto;width:78px;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:#0c0d11;cursor:pointer;position:relative}
+  .look:hover{border-color:var(--accent)}
+  .look img{width:100%;height:96px;object-fit:cover;display:block;background:#111}
+  .look .nm{font-size:9.5px;font-weight:600;color:var(--muted);padding:3px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .look .del{position:absolute;top:3px;right:3px;width:17px;height:17px;border-radius:50%;background:rgba(10,10,12,.85);
+    color:#e0607e;border:none;font-size:11px;cursor:pointer;display:none;line-height:17px}
+  .look:hover .del{display:block}
+  .muted{color:var(--muted);font-size:11.5px}
+
+  .toast{position:absolute;left:50%;bottom:22px;transform:translateX(-50%) translateY(16px);background:#20232c;border:1px solid var(--line);
+    color:var(--ink);padding:9px 16px;border-radius:999px;font-size:12.5px;font-weight:600;opacity:0;transition:.25s;pointer-events:none;z-index:20}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .spin{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:13px;letter-spacing:1px}
+
+  @media(max-width:1000px){
+    main{grid-template-columns:1fr}
+    .side{position:absolute;top:0;bottom:0;width:240px;z-index:8;opacity:.98}
+    .side.left{left:0}.side.right{right:0}
+    #view{grid-column:1}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand"><div class="mk">✦</div><div><h1>STYLE&nbsp;STUDIO</h1><small>3D Fashion Design</small></div></div>
+    <div class="sp"></div>
+    <button class="tbtn on" id="rotBtn">◐ Auto-rotate</button>
+    <button class="tbtn" id="resetBtn">⟲ Reset view</button>
+    <button class="tbtn" id="exportBtn">⤓ Export</button>
+    <button class="tbtn primary" id="saveBtn">♥ Save design</button>
+  </header>
+
+  <main>
+    <aside class="side left">
+      <div class="sec">
+        <h2>Garment</h2>
+        <div class="garmentbtns" id="garmentBtns"></div>
+      </div>
+      <div class="sec">
+        <h2>Dress form</h2>
+        <div class="opts" id="formOpts"></div>
+      </div>
+      <div class="sec">
+        <h2>Studio</h2>
+        <div class="field"><label>Backdrop</label><div class="opts" id="bgOpts"></div></div>
+        <div class="field"><label>Light</label><div class="opts" id="lightOpts"></div></div>
+      </div>
+    </aside>
+
+    <div id="view">
+      <canvas id="c"></canvas>
+      <div class="spin" id="spin">Loading studio…</div>
+      <div class="viewhud">Drag to <b>rotate</b> · scroll to <b>zoom</b> · click a part to <b>edit</b></div>
+      <div class="toast" id="toast"></div>
+    </div>
+
+    <aside class="side right">
+      <div class="sec">
+        <div class="tabs" id="tabs"></div>
+        <div id="tabbody"></div>
+      </div>
+      <div class="sec">
+        <h2>Your designs</h2>
+        <div class="looks" id="looks"><div class="muted">Loading…</div></div>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.js" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from './vendor/OrbitControls.js';
+import { RoomEnvironment } from './vendor/RoomEnvironment.js';
+
+/* ================= helpers ================= */
+const lerp=(a,b,t)=>a+(b-a)*t, clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function hexToRgb(h){h=h.replace('#','');return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
+function rgbToHex(r,g,b){const f=x=>('0'+Math.round(clamp(x,0,255)).toString(16)).slice(-2);return '#'+f(r)+f(g)+f(b);}
+function shade(hex,amt){const [r,g,b]=hexToRgb(hex);const t=amt<0?0:255,p=Math.abs(amt);return rgbToHex(lerp(r,t,p),lerp(g,t,p),lerp(b,t,p));}
+
+/* ================= fabrics ================= */
+const FABRICS = {
+  cotton: {label:'Cotton',  roughness:.88, metalness:0,  sheen:.30, sheenRough:.9, clearcoat:0,  bump:'plain',  bumpScale:.9,  drape:1.0},
+  linen:  {label:'Linen',   roughness:.92, metalness:0,  sheen:.25, sheenRough:.9, clearcoat:0,  bump:'linen',  bumpScale:1.3, drape:1.0},
+  denim:  {label:'Denim',   roughness:.9,  metalness:0,  sheen:.10, sheenRough:.9, clearcoat:0,  bump:'twill',  bumpScale:1.5, drape:0.85},
+  silk:   {label:'Silk',    roughness:.42, metalness:0,  sheen:.9,  sheenRough:.28,clearcoat:.12,bump:'fine',   bumpScale:.4,  drape:1.15},
+  satin:  {label:'Satin',   roughness:.28, metalness:0,  sheen:1.0, sheenRough:.2, clearcoat:.28,bump:null,      bumpScale:0,   drape:1.1},
+  leather:{label:'Leather', roughness:.5,  metalness:0,  sheen:0,   sheenRough:.5, clearcoat:.7, bump:'grain',  bumpScale:1.4, drape:0.6},
+  wool:   {label:'Wool',    roughness:.96, metalness:0,  sheen:.18, sheenRough:.9, clearcoat:0,  bump:'knit',   bumpScale:2.2, drape:0.8},
+  velvet: {label:'Velvet',  roughness:.9,  metalness:0,  sheen:1.0, sheenRough:.4, clearcoat:0,  bump:'fine',   bumpScale:.5,  drape:0.9},
+  sequin: {label:'Sequin',  roughness:.25, metalness:.85,sheen:.3,  sheenRough:.3, clearcoat:.2, bump:'sequin', bumpScale:2.5, drape:0.9},
+  tulle:  {label:'Tulle',   roughness:.6,  metalness:0,  sheen:.4,  sheenRough:.4, clearcoat:0,  bump:'net',    bumpScale:2.0, drape:1.3, transparent:true, opacity:.72},
+};
+
+/* ================= texture generation ================= */
+const _texCache={};
+function canvasTex(key, draw, {size=256, srgb=false}={}){
+  if(_texCache[key]) return _texCache[key];
+  const cv=document.createElement('canvas');cv.width=cv.height=size;const ctx=cv.getContext('2d');
+  draw(ctx,size);
+  const t=new THREE.CanvasTexture(cv);
+  t.wrapS=t.wrapT=THREE.RepeatWrapping;
+  if(srgb) t.colorSpace=THREE.SRGBColorSpace;
+  t.anisotropy=8;
+  _texCache[key]=t; return t;
+}
+/* bump (grayscale) generators */
+const BUMP = {
+  plain:(x,s)=>{x.fillStyle='#808080';x.fillRect(0,0,s,s);const n=s/12;for(let i=0;i<s;i+=n){for(let j=0;j<s;j+=n){const on=((i/n+j/n)%2)===0;x.fillStyle=on?'#9a9a9a':'#666';x.fillRect(i,j,n,n);}}},
+  fine:(x,s)=>{x.fillStyle='#808080';x.fillRect(0,0,s,s);const n=s/40;for(let i=0;i<s;i+=n){for(let j=0;j<s;j+=n){const on=((i/n+j/n)%2)===0;x.fillStyle=on?'#8c8c8c':'#747474';x.fillRect(i,j,n,n);}}},
+  linen:(x,s)=>{x.fillStyle='#808080';x.fillRect(0,0,s,s);for(let i=0;i<s;i+=3){x.fillStyle=i%6<3?'#8f8f8f':'#6f6f6f';x.fillRect(i,0,2,s);}for(let j=0;j<s;j+=3){x.fillStyle=j%6<3?'rgba(150,150,150,.4)':'rgba(100,100,100,.4)';x.fillRect(0,j,s,2);}},
+  twill:(x,s)=>{x.fillStyle='#7a7a7a';x.fillRect(0,0,s,s);x.strokeStyle='#a0a0a0';x.lineWidth=2;for(let k=-s;k<s*2;k+=6){x.beginPath();x.moveTo(k,0);x.lineTo(k+s,s);x.stroke();}x.strokeStyle='rgba(80,80,80,.5)';for(let k=-s;k<s*2;k+=6){x.beginPath();x.moveTo(k+3,0);x.lineTo(k+3+s,s);x.stroke();}},
+  knit:(x,s)=>{x.fillStyle='#808080';x.fillRect(0,0,s,s);const w=s/16;for(let i=0;i<s;i+=w){const g=x.createLinearGradient(i,0,i+w,0);g.addColorStop(0,'#5c5c5c');g.addColorStop(.5,'#a2a2a2');g.addColorStop(1,'#5c5c5c');x.fillStyle=g;x.fillRect(i,0,w,s);}for(let j=0;j<s;j+=w*1.4){x.fillStyle='rgba(60,60,60,.35)';x.fillRect(0,j,s,2);}},
+  grain:(x,s)=>{x.fillStyle='#808080';x.fillRect(0,0,s,s);for(let i=0;i<9000;i++){const v=120+Math.random()*70;x.fillStyle=`rgba(${v},${v},${v},.5)`;x.fillRect(Math.random()*s,Math.random()*s,1.5,1.5);}for(let i=0;i<400;i++){x.strokeStyle='rgba(70,70,70,.25)';x.beginPath();const px=Math.random()*s,py=Math.random()*s;x.moveTo(px,py);x.lineTo(px+Math.random()*10-5,py+Math.random()*10-5);x.stroke();}},
+  net:(x,s)=>{x.fillStyle='#808080';x.fillRect(0,0,s,s);x.strokeStyle='#b8b8b8';x.lineWidth=1;const n=s/22;for(let i=0;i<s;i+=n){x.beginPath();x.moveTo(i,0);x.lineTo(i,s);x.stroke();x.beginPath();x.moveTo(0,i);x.lineTo(s,i);x.stroke();}},
+  sequin:(x,s)=>{x.fillStyle='#6a6a6a';x.fillRect(0,0,s,s);const n=s/16;for(let i=0;i<s;i+=n){for(let j=0;j<s;j+=n){const g=x.createRadialGradient(i+n/2,j+n/2,1,i+n/2,j+n/2,n/1.6);g.addColorStop(0,'#d8d8d8');g.addColorStop(1,'#5a5a5a');x.fillStyle=g;x.beginPath();x.arc(i+n/2,j+n/2,n/2.2,0,7);x.fill();}}},
+};
+function bumpTex(name){ if(!name) return null; return canvasTex('bump_'+name, BUMP[name], {size:256}); }
+
+/* print (color) generators — draw with fg (c1) and bg (c2) */
+function printTex(kind,c1,c2){
+  if(kind==='solid') return null;
+  return canvasTex(`print_${kind}_${c1}_${c2}`, (x,s)=>{
+    x.fillStyle=c2; x.fillRect(0,0,s,s); x.fillStyle=c1; x.strokeStyle=c1;
+    const cx=s/2;
+    if(kind==='stripe'){for(let i=0;i<s;i+=s/8)x.fillRect(i,0,s/16,s);}
+    else if(kind==='pinstripe'){x.lineWidth=2;for(let i=0;i<s;i+=s/12){x.beginPath();x.moveTo(i,0);x.lineTo(i,s);x.stroke();}}
+    else if(kind==='dot'){const g=s/4;for(let i=0;i<4;i++)for(let j=0;j<4;j++){x.beginPath();x.arc(g*i+g/2,g*j+g/2,s/22,0,7);x.fill();}}
+    else if(kind==='gingham'){x.globalAlpha=.55;x.fillRect(0,0,s/2,s);x.fillRect(0,0,s,s/2);x.globalAlpha=1;}
+    else if(kind==='plaid'){x.globalAlpha=.5;x.fillRect(s*0.12,0,s*0.16,s);x.fillRect(0,s*0.12,s,s*0.16);x.globalAlpha=.9;x.fillRect(s*0.55,0,s*0.05,s);x.fillRect(0,s*0.55,s,s*0.05);x.globalAlpha=1;}
+    else if(kind==='chevron'){x.lineWidth=s/12;x.lineJoin='round';for(let o=-s;o<s*2;o+=s/3){x.beginPath();x.moveTo(0,o);x.lineTo(cx,o- s/6);x.lineTo(s,o);x.stroke();}}
+    else if(kind==='houndstooth'){const n=s/4;for(let i=0;i<4;i++)for(let j=0;j<4;j++){if((i+j)%2===0){x.fillRect(i*n,j*n,n,n);x.beginPath();x.moveTo(i*n,j*n);x.lineTo(i*n-n/2,j*n);x.lineTo(i*n,j*n-n/2);x.fill();}}}
+    else if(kind==='camo'){const cols=[c1,shade(c1,-.3),shade(c2,-.2),c2];for(let b=0;b<26;b++){x.fillStyle=cols[b%cols.length];x.beginPath();const bx=Math.random()*s,by=Math.random()*s,r=s/7+Math.random()*s/6;for(let a=0;a<7;a+=0.5){const rr=r*(0.7+Math.random()*0.4);x.lineTo(bx+Math.cos(a)*rr,by+Math.sin(a)*rr);}x.closePath();x.fill();}}
+    else if(kind==='leopard'){x.fillStyle=shade(c2,.05);x.fillRect(0,0,s,s);for(let i=0;i<40;i++){const bx=Math.random()*s,by=Math.random()*s;x.fillStyle=c1;x.beginPath();x.arc(bx,by,s/26,0,7);x.fill();x.strokeStyle=shade(c1,-.5);x.lineWidth=3;x.beginPath();x.arc(bx,by,s/18,0.5,4);x.stroke();}}
+    else if(kind==='floral'){for(let i=0;i<9;i++){const bx=(i%3)*s/3+s/6,by=Math.floor(i/3)*s/3+s/6;x.fillStyle=c1;for(let p=0;p<6;p++){const a=p/6*7;x.beginPath();x.arc(bx+Math.cos(a)*s/22,by+Math.sin(a)*s/22,s/28,0,7);x.fill();}x.fillStyle=shade(c1,-.25);x.beginPath();x.arc(bx,by,s/34,0,7);x.fill();}}
+    else if(kind==='star'){const g=s/4;for(let i=0;i<4;i++)for(let j=0;j<4;j++){const bx=g*i+g/2,by=g*j+g/2;x.beginPath();for(let k=0;k<10;k++){const a=k/10*7-1.57,rr=k%2?s/34:s/16;x[k?'lineTo':'moveTo'](bx+Math.cos(a)*rr,by+Math.sin(a)*rr);}x.closePath();x.fill();}}
+  }, {size:256, srgb:true});
+}
+
+/* ================= scene ================= */
+let renderer,scene,camera,controls,pmrem;
+let formGroup, garmentGroup, floorMat;
+const canvas=document.getElementById('c');
+const spin=document.getElementById('spin');
+
+function initScene(){
+  renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,preserveDrawingBuffer:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.outputColorSpace=THREE.SRGBColorSpace;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure=1.05;
+  renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+
+  scene=new THREE.Scene();
+  pmrem=new THREE.PMREMGenerator(renderer);
+  scene.environment=pmrem.fromScene(new RoomEnvironment(),0.04).texture;
+
+  camera=new THREE.PerspectiveCamera(38, 1, 0.1, 100);
+  camera.position.set(0,0.15,2.75);
+
+  controls=new OrbitControls(camera,renderer.domElement);
+  controls.enableDamping=true; controls.dampingFactor=.08;
+  controls.minDistance=1.6; controls.maxDistance=5;
+  controls.target.set(0,-0.22,0);
+  controls.minPolarAngle=0.6; controls.maxPolarAngle=2.2;
+  controls.autoRotate=true; controls.autoRotateSpeed=1.1;
+
+  const hemi=new THREE.HemisphereLight(0xdfe6ff,0x20222c,0.55); scene.add(hemi);
+  const key=new THREE.DirectionalLight(0xffffff,2.1); key.position.set(2.2,3.2,2.4);
+  key.castShadow=true; key.shadow.mapSize.set(2048,2048);
+  key.shadow.camera.near=1; key.shadow.camera.far=12;
+  key.shadow.camera.left=-2;key.shadow.camera.right=2;key.shadow.camera.top=2;key.shadow.camera.bottom=-2;
+  key.shadow.bias=-0.0004; key.shadow.radius=6;
+  scene.add(key); window._key=key;
+  const rim=new THREE.DirectionalLight(0x88aaff,1.1); rim.position.set(-2.5,1.6,-2.2); scene.add(rim);
+  const fill=new THREE.DirectionalLight(0xffffff,0.5); fill.position.set(-1.5,0.6,2.5); scene.add(fill);
+
+  floorMat=new THREE.MeshStandardMaterial({color:0x0e0f13,roughness:.35,metalness:.2});
+  const floor=new THREE.Mesh(new THREE.CircleGeometry(6,64),floorMat);
+  floor.rotation.x=-Math.PI/2; floor.position.y=-1.32; floor.receiveShadow=true; scene.add(floor);
+
+  setBackdrop('charcoal');
+  buildForm('linen');
+  window.addEventListener('resize',onResize); onResize();
+  spin.style.display='none';
+  animate();
+}
+
+const BACKDROPS={
+  charcoal:['#22242e','#0a0b0e'], slate:['#2b3350','#0c0e15'], warm:['#3a2e2a','#0d0a09'],
+  rose:['#3a2230','#120a0f'], white:['#e9ebf2','#c3c7d2'],
+};
+function setBackdrop(name){
+  const [a,b]=BACKDROPS[name]||BACKDROPS.charcoal;
+  const cv=document.createElement('canvas');cv.width=8;cv.height=256;const ctx=cv.getContext('2d');
+  const g=ctx.createLinearGradient(0,0,0,256);g.addColorStop(0,a);g.addColorStop(1,b);ctx.fillStyle=g;ctx.fillRect(0,0,8,256);
+  const t=new THREE.CanvasTexture(cv);t.colorSpace=THREE.SRGBColorSpace; scene.background=t;
+  if(floorMat){floorMat.color.set(name==='white'?0xcfd2db:0x0e0f13);floorMat.needsUpdate=true;}
+}
+
+/* ---- dress form (tailor's mannequin) ---- */
+const FORM_FINISH={
+  linen:{color:0xd8cdbb,rough:.95,metal:0}, dark:{color:0x2a2d36,rough:.7,metal:.1},
+  black:{color:0x14151a,rough:.5,metal:.2}, mauve:{color:0x8a6f7e,rough:.85,metal:0},
+};
+function buildForm(finish){
+  if(formGroup){scene.remove(formGroup);formGroup.traverse(o=>{o.geometry&&o.geometry.dispose();});}
+  formGroup=new THREE.Group();
+  const f=FORM_FINISH[finish]||FORM_FINISH.linen;
+  const mat=new THREE.MeshStandardMaterial({color:f.color,roughness:f.rough,metalness:f.metal});
+  const prof=[[0.02,0.60],[0.075,0.565],[0.085,0.52],[0.16,0.46],[0.175,0.34],[0.155,0.20],[0.135,0.03],[0.155,-0.12],[0.185,-0.26],[0.17,-0.42],[0.05,-0.5]];
+  const pts=prof.map(p=>new THREE.Vector2(p[0],p[1]));
+  const torso=new THREE.Mesh(new THREE.LatheGeometry(pts,64),mat);
+  torso.castShadow=true; torso.receiveShadow=true; torso.name='form';
+  formGroup.add(torso);
+  const knob=new THREE.Mesh(new THREE.SphereGeometry(0.055,24,20),mat);knob.position.y=0.635;knob.castShadow=true;formGroup.add(knob);
+  const poleMat=new THREE.MeshStandardMaterial({color:0x9a9ba2,roughness:.35,metalness:.9});
+  const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.022,0.022,0.82,20),poleMat);pole.position.y=-0.9;pole.castShadow=true;formGroup.add(pole);
+  const base=new THREE.Mesh(new THREE.CylinderGeometry(0.26,0.3,0.05,40),poleMat);base.position.y=-1.3;base.castShadow=true;base.receiveShadow=true;formGroup.add(base);
+  scene.add(formGroup);
+}
+
+/* ================= garment geometry ================= */
+function buildTube({y0,y1,r0,r1,pleatN=0,pleatDepth=0,pleatShape='soft',hemStyle='plain',hemPoints=8,hemAmp=0,
+                    neck=null, front=1, RS=120, HS=48, uvY=3, taperEase=1.4}){
+  const pos=[],uv=[],idx=[];
+  // precompute ring radius/height + accumulated slant distance for real-world UVs
+  const Rj=[],Yj=[],SV=[];let acc=0;
+  for(let j=0;j<=HS;j++){const t=j/HS;const te=Math.pow(t,taperEase);Rj[j]=lerp(r0,r1,te);Yj[j]=lerp(y0,y1,t);
+    if(j>0)acc+=Math.hypot(Rj[j]-Rj[j-1],Yj[j]-Yj[j-1]);SV[j]=acc;}
+  for(let j=0;j<=HS;j++){
+    const t=j/HS;
+    const te=Math.pow(t,taperEase);
+    for(let i=0;i<=RS;i++){
+      const a=i/RS*Math.PI*2;
+      let baseR=lerp(r0,r1,te);
+      if(pleatN){
+        let w;
+        const ph=(a*pleatN)/(Math.PI*2); const fr=ph-Math.floor(ph);
+        if(pleatShape==='knife') w=fr<0.85? fr/0.85 : 1-(fr-0.85)/0.15;
+        else if(pleatShape==='box') w=fr<0.5?1:0;
+        else w=(Math.sin(a*pleatN)+1)/2;
+        baseR += w*pleatDepth*baseR*Math.pow(t,0.6);
+      }
+      let x=Math.cos(a)*baseR, z=Math.sin(a)*baseR, y=lerp(y0,y1,t);
+      if(t>0.9){
+        const edge=(t-0.9)/0.1;
+        if(hemStyle==='scallop'){const sc=Math.abs(Math.sin(a*hemPoints));y -= (1-sc)*hemAmp*edge;}
+        else if(hemStyle==='handkerchief'){y += Math.sin(a*hemPoints)*hemAmp*edge;}
+        else if(hemStyle==='asym'){y += (Math.sin(a)*-0.5+0.5)*hemAmp*edge*2 - hemAmp*edge;}
+      }
+      if(neck && t<0.34){
+        const zside=Math.sin(a);
+        const topEdge=(0.34-t)/0.34;
+        let cut=0;
+        if(neck==='vneck') cut = Math.max(0,zside*front)>0.2? topEdge*0.16*Math.max(0,zside*front):0;
+        else if(neck==='scoop') cut = topEdge*0.10*Math.max(0,zside*front);
+        else if(neck==='sweetheart') cut = topEdge*0.11*Math.max(0,zside*front)*(0.6+0.4*Math.cos(a*2));
+        else if(neck==='square') cut = (Math.abs(Math.cos(a))<0.55 && zside*front>0)? topEdge*0.12:0;
+        y -= cut;
+      }
+      pos.push(x,y,z); uv.push((i/RS)*2*Math.PI*Rj[j], SV[j]); // UVs in metres (undistorted)
+    }
+  }
+  for(let j=0;j<HS;j++)for(let i=0;i<RS;i++){const A=j*(RS+1)+i,B=A+1,C=A+(RS+1),D=C+1;idx.push(A,C,B,B,C,D);}
+  const g=new THREE.BufferGeometry();
+  g.setIndex(idx);g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.computeVertexNormals();
+  return g;
+}
+function torusRing(r,tube,y){const g=new THREE.TorusGeometry(r,tube,12,80);g.rotateX(Math.PI/2);g.translate(0,y,0);return g;}
+
+function makeFabricMat(fabricKey, color, printKind, printC1, printC2, printScale, finish){
+  const f=FABRICS[fabricKey]||FABRICS.cotton;
+  const m=new THREE.MeshPhysicalMaterial({
+    color:new THREE.Color(color), side:THREE.DoubleSide,
+    roughness:clamp(f.roughness - finish*0.35,0.05,1), metalness:f.metalness,
+    sheen:f.sheen, sheenRoughness:f.sheenRough, sheenColor:new THREE.Color(shade(color,.5)),
+    clearcoat:f.clearcoat, clearcoatRoughness:.3,
+    transparent:!!f.transparent, opacity:f.transparent?f.opacity:1,
+  });
+  // UVs are in metres, so repeat = tiles-per-metre (uniform => undistorted, square tiles)
+  const bump=bumpTex(f.bump);
+  if(bump){ const b=bump.clone(); b.needsUpdate=true; b.wrapS=b.wrapT=THREE.RepeatWrapping; b.repeat.set(34,34); m.bumpMap=b; m.bumpScale=f.bumpScale*0.02; }
+  const pt=printTex(printKind,printC1,printC2);
+  if(pt){ const p=pt.clone(); p.needsUpdate=true; p.wrapS=p.wrapT=THREE.RepeatWrapping; p.colorSpace=THREE.SRGBColorSpace;
+    const perM=1/(0.19/printScale); p.repeat.set(perM,perM); m.map=p; }
+  return m;
+}
+
+/* ================= state ================= */
+const DEFAULT_STATE=()=>({
+  garment:'dress', form:'linen', backdrop:'charcoal', light:'studio',
+  fabric:'satin', color:'#b7295a', finish:.45,
+  print:'solid', printC1:'#ffffff', printC2:'#b7295a', printScale:1,
+  length:'midi', flare:'aline', silhouette:'straight',
+  neckline:'sweetheart', sleeve:'strap',
+  pleats:'none', hem:'plain', waistband:'slim', waistColor:'#7a1638',
+  trim:'none', trimColor:'#e8c07d',
+});
+let S=DEFAULT_STATE();
+let history=[];
+function pushHistory(){ history.push(JSON.stringify(S)); if(history.length>40)history.shift(); }
+
+const LEN={mini:-0.42,knee:-0.62,midi:-0.9,maxi:-1.22, crop:-0.85, hip:-0.05};
+const FLARE={pencil:0.16,straight:0.2,aline:0.34,full:0.52,tent:0.66};
+const PLEAT={none:[0,0,'soft'],soft:[26,0.05,'soft'],knife:[34,0.10,'knife'],box:[16,0.13,'box'],accordion:[64,0.05,'soft']};
+const HEM={plain:['plain',8,0],scallop:['scallop',12,0.05],handkerchief:['handkerchief',6,0.14],asym:['asym',1,0.16],rolled:['plain',8,0]};
+
+function rebuildGarment(){
+  if(garmentGroup){scene.remove(garmentGroup);garmentGroup.traverse(o=>o.geometry&&o.geometry.dispose());}
+  garmentGroup=new THREE.Group();
+  const mat=makeFabricMat(S.fabric,S.color,S.print,S.printC1,S.printC2,S.printScale,S.finish);
+  const waistColorMat=new THREE.MeshPhysicalMaterial({color:new THREE.Color(S.waistColor),roughness:.7,metalness:.05,side:THREE.DoubleSide,clearcoat:.2});
+  const trimMat=new THREE.MeshPhysicalMaterial({color:new THREE.Color(S.trimColor),roughness:.5,metalness:.1,side:THREE.DoubleSide,clearcoat:.3,sheen:.6,sheenColor:new THREE.Color(shade(S.trimColor,.5))});
+  const [pN,pD,pS]=PLEAT[S.pleats]||PLEAT.none;
+  const [hStyle,hPts,hAmp]=HEM[S.hem]||HEM.plain;
+  const drape=(FABRICS[S.fabric]||FABRICS.cotton).drape;
+
+  function addSkirt(waistY,waistR){
+    const hemY=LEN[S.length]!==undefined?LEN[S.length]:-0.9;
+    let hemR=(FLARE[S.flare]||0.34)*lerp(0.9,1.12,drape-0.6);
+    const g=buildTube({y0:waistY,y1:hemY,r0:waistR,r1:hemR,pleatN:pN,pleatDepth:pD,pleatShape:pS,
+      hemStyle:hStyle,hemPoints:hPts,hemAmp:hAmp,RS:150,HS:70,uvY:Math.abs(hemY-waistY)*4,taperEase:1.5});
+    const skirt=new THREE.Mesh(g,mat);skirt.castShadow=true;skirt.receiveShadow=true;skirt.userData.part='body';garmentGroup.add(skirt);
+    if(S.trim==='band'){const tb=new THREE.Mesh(buildTube({y0:hemY,y1:hemY+0.05,r0:hemR,r1:hemR*1.005,RS:150,HS:2,uvY:1,taperEase:1}),trimMat);tb.castShadow=true;tb.userData.part='trim';garmentGroup.add(tb);}
+    if(S.trim==='piping'||S.hem==='rolled'){const rr=new THREE.Mesh(torusRing(hemR,0.012,hemY),S.trim==='piping'?trimMat:mat);rr.castShadow=true;rr.userData.part='trim';garmentGroup.add(rr);}
+    return {hemY,hemR};
+  }
+  function addWaistband(centerY,waistR){
+    if(S.waistband==='none')return;
+    const h=S.waistband==='wide'?0.12:0.055;
+    const wb=new THREE.Mesh(buildTube({y0:centerY+h/2,y1:centerY-h/2,r0:waistR,r1:waistR,RS:120,HS:3,taperEase:1}),waistColorMat);
+    wb.castShadow=true;wb.userData.part='waist';garmentGroup.add(wb);
+  }
+  function addBodice(topY,waistY){
+    const g=buildTube({y0:topY,y1:waistY,r0:0.2,r1:0.17,neck:S.neckline,front:1,RS:120,HS:40,uvY:2.2,taperEase:1});
+    const b=new THREE.Mesh(g,mat);b.castShadow=true;b.receiveShadow=true;b.userData.part='body';garmentGroup.add(b);
+    if(S.sleeve==='strap'){
+      [-1,1].forEach(sx=>{const st=new THREE.Mesh(new THREE.CylinderGeometry(0.013,0.013,0.095,10),mat);
+        st.position.set(sx*0.093,topY-0.02,0.055);st.rotation.z=sx*0.07;st.rotation.x=-0.18;st.castShadow=true;st.userData.part='body';garmentGroup.add(st);});
+    } else if(S.sleeve==='cap'||S.sleeve==='short'||S.sleeve==='long'){
+      const len=S.sleeve==='cap'?0.12:S.sleeve==='short'?0.28:0.52;
+      const r1=S.sleeve==='long'?0.046:0.075;
+      [-1,1].forEach(sx=>{const g2=buildTube({y0:topY+0.015,y1:topY+0.015-len,r0:0.082,r1,RS:40,HS:Math.max(8,Math.round(len*44)),taperEase:1});
+        const sl=new THREE.Mesh(g2,mat);sl.position.set(sx*0.188,0,0);sl.rotation.z=sx*0.12;sl.castShadow=true;sl.receiveShadow=true;sl.userData.part='body';garmentGroup.add(sl);});
+    }
+  }
+  function addPants(){
+    const waistY=0.02, ankleY=(S.length==='crop'?-0.85:-1.05);
+    const thigh=0.12, ankle=S.silhouette==='skinny'?0.052:S.silhouette==='wide'?0.13:S.silhouette==='flare'?0.11:0.075;
+    [-1,1].forEach(sx=>{const g=buildTube({y0:waistY,y1:ankleY,r0:thigh,r1:ankle,RS:48,HS:44,uvY:3.4,taperEase:1.1,
+      pleatN:pN?Math.round(pN/4):0,pleatDepth:pD*0.4,pleatShape:pS});
+      g.translate(sx*0.075,0,0);
+      const leg=new THREE.Mesh(g,mat);leg.castShadow=true;leg.receiveShadow=true;leg.userData.part='body';garmentGroup.add(leg);});
+    addWaistband(0.03,0.166);
+  }
+
+  if(S.garment==='dress'){ addSkirt(0.02,0.17); addBodice(0.44,0.03); addWaistband(0.02,0.176); }
+  else if(S.garment==='skirt'){ addSkirt(0.02,0.17); addWaistband(0.03,0.176); }
+  else if(S.garment==='top'){ addBodice(0.44,-0.12); }
+  else if(S.garment==='pants'){ addPants(); }
+
+  scene.add(garmentGroup);
+}
+
+/* ================= render loop ================= */
+function onResize(){const w=canvas.clientWidth,h=canvas.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera);}
+
+/* ================= UI ================= */
+const $=s=>document.querySelector(s);
+const GICONS={
+  dress:'<path d="M9 3l3 3 3-3M9 3l-1 5 4 3M15 3l1 5-4 3M8 8L5 20h14L16 8"/>',
+  top:'<path d="M7 4l-3 3 2 2 1-1v12h10V8l1 1 2-2-3-3-3 1a3 3 0 01-4 0z"/>',
+  skirt:'<path d="M8 4h8l1 4H7zM7 8l-3 12h16L14 8"/>',
+  pants:'<path d="M7 3h10l-1 18h-4l-1-9-1 9H8z"/>',
+};
+function makeGarmentBtns(){
+  const el=$('#garmentBtns');el.innerHTML='';
+  [['dress','Dress'],['top','Top'],['skirt','Skirt'],['pants','Pants']].forEach(([k,l])=>{
+    const b=document.createElement('div');b.className='gbtn'+(S.garment===k?' active':'');
+    b.innerHTML=`<svg viewBox="0 0 24 24">${GICONS[k]}</svg><span>${l}</span>`;
+    b.onclick=()=>{pushHistory();S.garment=k;rebuildGarment();makeGarmentBtns();renderTabs();};
+    el.appendChild(b);
+  });
+}
+function optRow(label,val,choices,onpick){
+  const f=document.createElement('div');f.className='field';
+  f.innerHTML=`<label>${label}</label>`;const o=document.createElement('div');o.className='opts';
+  choices.forEach(([k,l])=>{const b=document.createElement('div');b.className='opt'+(val===k?' active':'');b.textContent=l;
+    b.onclick=()=>{pushHistory();onpick(k);};o.appendChild(b);});
+  f.appendChild(o);return f;
+}
+const PALETTE=['#ffffff','#e9e3d5','#d9c19a','#e0b15a','#d98324','#b5651d','#7a3e1d','#111318',
+  '#3a2b32','#7a2233','#b7295a','#e0567f','#f4a6c0','#c4436a','#8a1f3a','#4e1330',
+  '#1f3a5f','#2b59c3','#5b8def','#7c5cff','#5a2ea6','#2ec4b6','#1f7a3d','#7bc96f'];
+function swatchRow(cur,onpick){
+  const wrap=document.createElement('div');
+  const g=document.createElement('div');g.className='swatches';
+  PALETTE.forEach(c=>{const d=document.createElement('div');d.className='sw'+(cur.toLowerCase()===c.toLowerCase()?' active':'');d.style.background=c;
+    d.onclick=()=>{pushHistory();onpick(c);};g.appendChild(d);});
+  const cr=document.createElement('div');cr.className='crow';
+  const inp=document.createElement('input');inp.type='color';inp.value=/^#[0-9a-f]{6}$/i.test(cur)?cur:'#ffffff';
+  inp.oninput=e=>onpick(e.target.value); inp.onchange=()=>pushHistory();
+  const sp=document.createElement('span');sp.className='muted';sp.textContent='Custom';
+  cr.appendChild(inp);cr.appendChild(sp);wrap.appendChild(g);wrap.appendChild(cr);return wrap;
+}
+function rangeRow(label,val,min,max,step,onpick){
+  const f=document.createElement('div');f.className='field';
+  const id='r'+Math.random().toString(36).slice(2,6);
+  f.innerHTML=`<label>${label}<span class="rangeval" id="${id}">${(+val).toFixed(2)}</span></label>`;
+  const r=document.createElement('input');r.type='range';r.min=min;r.max=max;r.step=step;r.value=val;
+  r.oninput=e=>{document.getElementById(id).textContent=(+e.target.value).toFixed(2);onpick(+e.target.value);};
+  r.onchange=()=>pushHistory();f.appendChild(r);return f;
+}
+
+let curTab='fabric';
+const TABS=[['fabric','Fabric'],['print','Print'],['cut','Cut'],['details','Details']];
+function renderTabs(){
+  const tb=$('#tabs');tb.innerHTML='';
+  TABS.forEach(([k,l])=>{const b=document.createElement('div');b.className='tab'+(curTab===k?' active':'');b.textContent=l;
+    b.onclick=()=>{curTab=k;renderTabs();};tb.appendChild(b);});
+  renderTabBody();
+}
+function renderTabBody(){
+  const body=$('#tabbody');body.innerHTML='';
+  if(curTab==='fabric'){
+    body.appendChild(optRow('Fabric',S.fabric,Object.keys(FABRICS).map(k=>[k,FABRICS[k].label]),k=>{S.fabric=k;rebuildGarment();renderTabBody();}));
+    const cf=document.createElement('div');cf.className='field';cf.innerHTML='<label>Color</label>';
+    cf.appendChild(swatchRow(S.color,(c)=>{S.color=c;if(S.print==='solid')S.printC2=c;rebuildGarment();}));body.appendChild(cf);
+    body.appendChild(rangeRow('Finish (matte → shiny)',S.finish,0,1,0.01,(v)=>{S.finish=v;rebuildGarment();}));
+  }
+  else if(curTab==='print'){
+    body.appendChild(optRow('Pattern',S.print,[['solid','Solid'],['stripe','Stripe'],['pinstripe','Pinstripe'],['dot','Dots'],['gingham','Gingham'],['plaid','Plaid'],['chevron','Chevron'],['houndstooth','Houndstooth'],['floral','Floral'],['star','Stars'],['camo','Camo'],['leopard','Leopard']],k=>{S.print=k;rebuildGarment();renderTabBody();}));
+    if(S.print!=='solid'){
+      const c1=document.createElement('div');c1.className='field';c1.innerHTML='<label>Pattern color</label>';c1.appendChild(swatchRow(S.printC1,c=>{S.printC1=c;rebuildGarment();}));body.appendChild(c1);
+      const c2=document.createElement('div');c2.className='field';c2.innerHTML='<label>Background color</label>';c2.appendChild(swatchRow(S.printC2,c=>{S.printC2=c;rebuildGarment();}));body.appendChild(c2);
+      body.appendChild(rangeRow('Pattern scale',S.printScale,0.4,3,0.05,v=>{S.printScale=v;rebuildGarment();}));
+    }
+  }
+  else if(curTab==='cut'){
+    if(S.garment==='dress'||S.garment==='skirt'){
+      body.appendChild(optRow('Length',S.length,[['mini','Mini'],['knee','Knee'],['midi','Midi'],['maxi','Maxi']],k=>{S.length=k;rebuildGarment();renderTabBody();}));
+      body.appendChild(optRow('Silhouette',S.flare,[['pencil','Pencil'],['straight','Straight'],['aline','A-line'],['full','Full'],['tent','Circle']],k=>{S.flare=k;rebuildGarment();renderTabBody();}));
+    }
+    if(S.garment==='dress'||S.garment==='top'){
+      body.appendChild(optRow('Neckline',S.neckline,[['scoop','Scoop'],['vneck','V-neck'],['sweetheart','Sweetheart'],['square','Square'],['crew','High']],k=>{S.neckline=k;rebuildGarment();renderTabBody();}));
+      body.appendChild(optRow('Sleeve',S.sleeve,[['strap','Straps'],['cap','Cap'],['short','Short'],['long','Long'],['none','Strapless']],k=>{S.sleeve=k;rebuildGarment();renderTabBody();}));
+    }
+    if(S.garment==='pants'){
+      body.appendChild(optRow('Length',S.length,[['crop','Cropped'],['maxi','Full']],k=>{S.length=k;rebuildGarment();renderTabBody();}));
+      body.appendChild(optRow('Fit',S.silhouette,[['skinny','Skinny'],['straight','Straight'],['wide','Wide'],['flare','Flare']],k=>{S.silhouette=k;rebuildGarment();renderTabBody();}));
+    }
+  }
+  else if(curTab==='details'){
+    if(S.garment!=='top'){
+      body.appendChild(optRow('Pleats',S.pleats,[['none','None'],['soft','Soft'],['knife','Knife'],['box','Box'],['accordion','Accordion']],k=>{S.pleats=k;rebuildGarment();renderTabBody();}));
+      body.appendChild(optRow('Hem',S.hem,[['plain','Plain'],['rolled','Rolled'],['scallop','Scalloped'],['handkerchief','Handkerchief'],['asym','Asymmetric']],k=>{S.hem=k;rebuildGarment();renderTabBody();}));
+    }
+    body.appendChild(optRow('Waistband',S.waistband,[['none','None'],['slim','Slim'],['wide','Wide']],k=>{S.waistband=k;rebuildGarment();renderTabBody();}));
+    if(S.waistband!=='none'){const wc=document.createElement('div');wc.className='field';wc.innerHTML='<label>Waistband color</label>';wc.appendChild(swatchRow(S.waistColor,c=>{S.waistColor=c;rebuildGarment();}));body.appendChild(wc);}
+    body.appendChild(optRow('Trim',S.trim,[['none','None'],['band','Hem band'],['piping','Piping']],k=>{S.trim=k;rebuildGarment();renderTabBody();}));
+    if(S.trim!=='none'){const tc=document.createElement('div');tc.className='field';tc.innerHTML='<label>Trim color</label>';tc.appendChild(swatchRow(S.trimColor,c=>{S.trimColor=c;rebuildGarment();}));body.appendChild(tc);}
+  }
+}
+
+function renderLeftExtras(){
+  const fo=$('#formOpts');fo.innerHTML='';
+  [['linen','Linen'],['dark','Charcoal'],['black','Black'],['mauve','Mauve']].forEach(([k,l])=>{
+    const b=document.createElement('div');b.className='opt'+(S.form===k?' active':'');b.textContent=l;
+    b.onclick=()=>{S.form=k;buildForm(k);renderLeftExtras();};fo.appendChild(b);});
+  const bo=$('#bgOpts');bo.innerHTML='';
+  [['charcoal','Charcoal'],['slate','Slate'],['warm','Warm'],['rose','Rose'],['white','White']].forEach(([k,l])=>{
+    const b=document.createElement('div');b.className='opt'+(S.backdrop===k?' active':'');b.textContent=l;
+    b.onclick=()=>{S.backdrop=k;setBackdrop(k);renderLeftExtras();};bo.appendChild(b);});
+  const lo=$('#lightOpts');lo.innerHTML='';
+  [['studio','Studio'],['runway','Runway'],['soft','Soft'],['moody','Moody']].forEach(([k,l])=>{
+    const b=document.createElement('div');b.className='opt'+(S.light===k?' active':'');b.textContent=l;
+    b.onclick=()=>{S.light=k;setLight(k);renderLeftExtras();};lo.appendChild(b);});
+}
+function setLight(k){
+  const key=window._key;if(!key)return;
+  const P={studio:[2.1,1.05],runway:[3.0,1.2],soft:[1.3,0.95],moody:[3.4,0.8]};
+  const [i,e]=P[k]||P.studio;key.intensity=i;renderer.toneMappingExposure=e;
+}
+
+/* ================= raycast click to select part ================= */
+const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();
+function wireClick(){
+  canvas.addEventListener('pointerdown',e=>{ canvas._px=e.clientX;canvas._py=e.clientY; });
+  canvas.addEventListener('pointerup',e=>{
+    if(Math.abs(e.clientX-canvas._px)>4||Math.abs(e.clientY-canvas._py)>4)return;
+    const r=canvas.getBoundingClientRect();mouse.x=((e.clientX-r.left)/r.width)*2-1;mouse.y=-((e.clientY-r.top)/r.height)*2+1;
+    ray.setFromCamera(mouse,camera);
+    const hits=ray.intersectObjects(garmentGroup?garmentGroup.children:[],true);
+    if(hits.length){const p=hits[0].object.userData.part;
+      if(p==='waist'||p==='trim'){curTab='details';} else {curTab='fabric';}
+      renderTabs();
+    }
+  });
+}
+
+/* ================= save / load ================= */
+const toastEl=$('#toast');let toastT;
+function toast(m){toastEl.textContent=m;toastEl.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>toastEl.classList.remove('show'),1900);}
+function snapshotThumb(){
+  renderer.render(scene,camera);
+  const full=renderer.domElement;
+  const c=document.createElement('canvas');c.width=180;c.height=220;const x=c.getContext('2d');
+  const sw=full.width,sh=full.height,ar=180/220;let cw=sw,ch=sw/ar;if(ch>sh){ch=sh;cw=sh*ar;}
+  x.drawImage(full,(sw-cw)/2,(sh-ch)/2,cw,ch,0,0,180,220);
+  return c.toDataURL('image/png');
+}
+const LS_KEY='styleStudio3d.local';
+async function apiList(){try{const r=await fetch('/api/designs');if(!r.ok)throw 0;return (await r.json()).designs||[];}catch(e){return JSON.parse(localStorage.getItem(LS_KEY)||'[]');}}
+async function apiSave(name){
+  const thumb=snapshotThumb();const payload={name,state:S,thumb};
+  try{const r=await fetch('/api/designs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});if(!r.ok)throw 0;return await r.json();}
+  catch(e){const arr=JSON.parse(localStorage.getItem(LS_KEY)||'[]');const d={id:'d'+Date.now(),name,state:S,thumb,updated:Date.now()};arr.unshift(d);localStorage.setItem(LS_KEY,JSON.stringify(arr.slice(0,60)));return d;}
+}
+async function apiGet(id){try{const r=await fetch('/api/designs/'+id);if(!r.ok)throw 0;return await r.json();}catch(e){return (JSON.parse(localStorage.getItem(LS_KEY)||'[]')).find(d=>d.id===id);}}
+async function apiDel(id){try{await fetch('/api/designs/'+id,{method:'DELETE'});}catch(e){}const arr=JSON.parse(localStorage.getItem(LS_KEY)||'[]').filter(d=>d.id!==id);localStorage.setItem(LS_KEY,JSON.stringify(arr));}
+async function renderLooks(){
+  const el=$('#looks');const arr=await apiList();
+  if(!arr.length){el.innerHTML='<div class="muted">No saved designs yet. Style something and tap ♥ Save design.</div>';return;}
+  el.innerHTML='';
+  arr.forEach(d=>{const w=document.createElement('div');w.className='look';
+    w.innerHTML=`<img src="${d.thumb||''}" alt=""><div class="nm">${d.name||'Untitled'}</div><button class="del">✕</button>`;
+    const load=async()=>{const full=await apiGet(d.id);if(full&&full.state){pushHistory();S=Object.assign(DEFAULT_STATE(),full.state);applyAll();toast('Loaded “'+(d.name||'design')+'”');}};
+    w.querySelector('img').onclick=load;w.querySelector('.nm').onclick=load;
+    w.querySelector('.del').onclick=async(e)=>{e.stopPropagation();await apiDel(d.id);renderLooks();};
+    el.appendChild(w);});
+}
+function applyAll(){buildForm(S.form);setBackdrop(S.backdrop);setLight(S.light);rebuildGarment();makeGarmentBtns();renderTabs();renderLeftExtras();}
+
+/* ================= header buttons ================= */
+$('#rotBtn').onclick=(e)=>{controls.autoRotate=!controls.autoRotate;e.currentTarget.classList.toggle('on',controls.autoRotate);};
+$('#resetBtn').onclick=()=>{controls.autoRotate=false;$('#rotBtn').classList.remove('on');camera.position.set(0,0.15,2.75);controls.target.set(0,-0.22,0);};
+$('#exportBtn').onclick=()=>{renderer.render(scene,camera);const a=document.createElement('a');a.href=renderer.domElement.toDataURL('image/png');a.download=(S.garment+'-design')+'.png';a.click();toast('Exported PNG ⤓');};
+$('#saveBtn').onclick=async()=>{const n=prompt('Name this design:',S.garment.charAt(0).toUpperCase()+S.garment.slice(1)+' design');if(n===null)return;await apiSave(n||'Untitled');renderLooks();toast('Saved ♥');};
+window.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&history.length){S=JSON.parse(history.pop());applyAll();}});
+
+/* ================= boot ================= */
+initScene();
+rebuildGarment();
+wireClick();
+makeGarmentBtns();
+renderTabs();
+renderLeftExtras();
+renderLooks();
+window.__ss={get S(){return S;},set S(v){S=v;},applyAll,rebuildGarment,get renderer(){return renderer;},get scene(){return scene;},get camera(){return camera;}};
+</script>
+</body>
+</html>
