@@ -2,8 +2,16 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
 <title>Style Studio 3D — Fashion Design</title>
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#0e0f13" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Style Studio" />
+<link rel="apple-touch-icon" href="icon-180.png" />
+<link rel="icon" type="image/png" href="icon-192.png" />
 <style>
   :root{
     --bg:#0e0f13; --panel:#16181f; --panel2:#1d2029; --line:#2a2e3a;
@@ -89,6 +97,49 @@
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .spin{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:13px;letter-spacing:1px}
 
+  /* info circles + tooltips */
+  .info{display:inline-flex;width:15px;height:15px;border-radius:50%;border:1px solid var(--muted);color:var(--muted);
+    font-size:10px;align-items:center;justify-content:center;cursor:pointer;margin-left:6px;font-weight:800;
+    font-style:italic;vertical-align:middle;font-family:Georgia,serif;flex:0 0 auto}
+  .info:hover{border-color:var(--accent);color:var(--accent)}
+  .tooltip{position:fixed;z-index:80;max-width:250px;background:#0c0d11;border:1px solid var(--accent);border-radius:9px;
+    padding:9px 12px;font-size:12px;line-height:1.5;color:#dfe3ee;box-shadow:0 12px 34px rgba(0,0,0,.55)}
+  .tooltip b{color:var(--accent)}
+
+  /* guide modal */
+  .overlay{position:fixed;inset:0;background:rgba(5,6,9,.74);z-index:70;display:none;align-items:center;justify-content:center;padding:20px}
+  .overlay.show{display:flex}
+  .modal{background:var(--panel);border:1px solid var(--line);border-radius:16px;max-width:780px;width:100%;max-height:88vh;
+    overflow-y:auto;box-shadow:0 30px 90px rgba(0,0,0,.6)}
+  .modal::-webkit-scrollbar{width:10px}.modal::-webkit-scrollbar-thumb{background:#2a2e3a;border-radius:9px}
+  .mh{display:flex;align-items:center;gap:10px;padding:15px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;
+    background:var(--panel);z-index:2}
+  .mh h3{margin:0;font-size:16px;letter-spacing:1.5px}
+  .mh .close{margin-left:auto;border:1px solid var(--line);background:#1b1e27;color:var(--ink);border-radius:8px;
+    padding:6px 12px;cursor:pointer;font-weight:700;font-size:13px}
+  .mh .close:hover{border-color:var(--accent);color:var(--accent)}
+  .mb{padding:16px 20px}
+  .mb h4.sec-t{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin:20px 0 10px}
+  .mb h4.sec-t:first-child{margin-top:0}
+  .mb p.intro{font-size:13px;color:#c4c9d6;line-height:1.55;margin:0 0 6px}
+  .steps{display:grid;gap:9px;margin:4px 0 6px}
+  .step{display:flex;gap:11px;font-size:13px;color:#cbd0dc;line-height:1.45;align-items:flex-start}
+  .step b{color:var(--ink)}
+  .stepn{flex:0 0 24px;height:24px;border-radius:50%;background:#221f18;color:var(--accent);display:grid;place-items:center;
+    font-size:12px;font-weight:800;border:1px solid var(--accent)}
+  .examples{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .ex{border:1px solid var(--line);border-radius:12px;padding:13px;background:var(--panel2);display:flex;flex-direction:column}
+  .ex h5{margin:0 0 3px;font-size:14px;color:var(--ink)}
+  .ex .desc{font-size:11.5px;color:var(--muted);margin-bottom:9px}
+  .ex ol{margin:0 0 12px;padding-left:17px;font-size:11.5px;color:#cbd0dc;line-height:1.6}
+  .ex ol b{color:var(--accent);font-weight:700}
+  .ex .load{margin-top:auto;width:100%;border:none;background:linear-gradient(135deg,var(--accent),#d99b3e);color:#151318;
+    font-weight:800;border-radius:8px;padding:9px;cursor:pointer;font-size:12.5px}
+  .ex .load:hover{filter:brightness(1.06)}
+  .glossary{display:grid;gap:7px}
+  .gl{font-size:12.5px;color:#c4c9d6;line-height:1.45}.gl b{color:var(--ink)}
+  @media(max-width:620px){.examples{grid-template-columns:1fr}}
+
   @media(max-width:1000px){
     main{grid-template-columns:1fr}
     .side{position:absolute;top:0;bottom:0;width:240px;z-index:8;opacity:.98}
@@ -102,6 +153,8 @@
   <header>
     <div class="brand"><div class="mk">✦</div><div><h1>STYLE&nbsp;STUDIO</h1><small>3D Fashion Design</small></div></div>
     <div class="sp"></div>
+    <button class="tbtn" id="installBtn" style="display:none">⤓ Install app</button>
+    <button class="tbtn" id="guideBtn">? Guide &amp; examples</button>
     <button class="tbtn on" id="rotBtn">◐ Auto-rotate</button>
     <button class="tbtn" id="resetBtn">⟲ Reset view</button>
     <button class="tbtn" id="exportBtn">⤓ Export</button>
@@ -130,6 +183,13 @@
       <div class="spin" id="spin">Loading studio…</div>
       <div class="viewhud">Drag to <b>rotate</b> · scroll to <b>zoom</b> · click a part to <b>edit</b></div>
       <div class="toast" id="toast"></div>
+    </div>
+
+    <div class="overlay" id="guideOverlay">
+      <div class="modal">
+        <div class="mh"><h3>✦ How to design</h3><button class="close" id="guideClose">Close ✕</button></div>
+        <div class="mb" id="guideBody"></div>
+      </div>
     </div>
 
     <aside class="side right">
@@ -517,9 +577,33 @@ function makeGarmentBtns(){
     el.appendChild(b);
   });
 }
-function optRow(label,val,choices,onpick){
+/* ---- info circles + tooltips ---- */
+let ttEl=null;
+function hideTip(){ if(ttEl){ttEl.remove();ttEl=null;} }
+function showTip(target,html){
+  hideTip();
+  ttEl=document.createElement('div');ttEl.className='tooltip';ttEl.innerHTML=html;ttEl._for=target;document.body.appendChild(ttEl);
+  const r=target.getBoundingClientRect();const tw=ttEl.getBoundingClientRect();
+  let left=r.left-10, top=r.bottom+8;
+  if(left+tw.width>innerWidth-10) left=innerWidth-10-tw.width;
+  if(left<10) left=10;
+  if(top+tw.height>innerHeight-10) top=r.top-tw.height-8;
+  ttEl.style.left=left+'px';ttEl.style.top=top+'px';
+}
+function infoDot(html){
+  const s=document.createElement('span');s.className='info';s.textContent='i';
+  s.onclick=(e)=>{e.stopPropagation(); if(ttEl&&ttEl._for===s)hideTip(); else showTip(s,html);};
+  s.onmouseenter=()=>showTip(s,html); s.onmouseleave=()=>{ if(ttEl&&ttEl._for===s)hideTip(); };
+  return s;
+}
+document.addEventListener('click',hideTip);
+window.addEventListener('scroll',hideTip,true);
+
+function optRow(label,val,choices,onpick,hint){
   const f=document.createElement('div');f.className='field';
-  f.innerHTML=`<label>${label}</label>`;const o=document.createElement('div');o.className='opts';
+  const lab=document.createElement('label');lab.textContent=label; if(hint)lab.appendChild(infoDot(hint));
+  f.appendChild(lab);
+  const o=document.createElement('div');o.className='opts';
   choices.forEach(([k,l])=>{const b=document.createElement('div');b.className='opt'+(val===k?' active':'');b.textContent=l;
     b.onclick=()=>{pushHistory();onpick(k);};o.appendChild(b);});
   f.appendChild(o);return f;
@@ -538,10 +622,11 @@ function swatchRow(cur,onpick){
   const sp=document.createElement('span');sp.className='muted';sp.textContent='Custom';
   cr.appendChild(inp);cr.appendChild(sp);wrap.appendChild(g);wrap.appendChild(cr);return wrap;
 }
-function rangeRow(label,val,min,max,step,onpick){
+function rangeRow(label,val,min,max,step,onpick,hint){
   const f=document.createElement('div');f.className='field';
   const id='r'+Math.random().toString(36).slice(2,6);
   f.innerHTML=`<label>${label}<span class="rangeval" id="${id}">${(+val).toFixed(2)}</span></label>`;
+  if(hint)f.querySelector('label').appendChild(infoDot(hint));
   const r=document.createElement('input');r.type='range';r.min=min;r.max=max;r.step=step;r.value=val;
   r.oninput=e=>{document.getElementById(id).textContent=(+e.target.value).toFixed(2);onpick(+e.target.value);};
   r.onchange=()=>pushHistory();f.appendChild(r);return f;
@@ -558,52 +643,52 @@ function renderTabs(){
 function renderTabBody(){
   const body=$('#tabbody');body.innerHTML='';
   if(curTab==='fabric'){
-    body.appendChild(optRow('Fabric',S.fabric,Object.keys(FABRICS).map(k=>[k,FABRICS[k].label]),k=>{S.fabric=k;rebuildGarment();renderTabBody();}));
-    const cf=document.createElement('div');cf.className='field';cf.innerHTML='<label>Color</label>';
+    body.appendChild(optRow('Fabric',S.fabric,Object.keys(FABRICS).map(k=>[k,FABRICS[k].label]),k=>{S.fabric=k;rebuildGarment();renderTabBody();},'The material itself — each fabric has its own shine, weave texture and weight. <b>Denim</b> looks woven, <b>Satin</b> is glossy, <b>Wool</b> is soft & matte, <b>Leather</b> has sheen.'));
+    const cf=document.createElement('div');cf.className='field';const cl=document.createElement('label');cl.textContent='Color';cl.appendChild(infoDot('The main colour of the fabric. Tap a swatch or use <b>Custom</b> for any colour.'));cf.appendChild(cl);
     cf.appendChild(swatchRow(S.color,(c)=>{S.color=c;if(S.print==='solid')S.printC2=c;rebuildGarment();}));body.appendChild(cf);
-    body.appendChild(rangeRow('Finish (matte → shiny)',S.finish,0,1,0.01,(v)=>{S.finish=v;rebuildGarment();}));
+    body.appendChild(rangeRow('Finish (matte → shiny)',S.finish,0,1,0.01,(v)=>{S.finish=v;rebuildGarment();},'Slides the surface from flat/matte to glossy/shiny — without changing the fabric.'));
   }
   else if(curTab==='print'){
-    body.appendChild(optRow('Pattern',S.print,[['solid','Solid'],['stripe','Stripe'],['pinstripe','Pinstripe'],['dot','Dots'],['gingham','Gingham'],['plaid','Plaid'],['chevron','Chevron'],['houndstooth','Houndstooth'],['floral','Floral'],['star','Stars'],['camo','Camo'],['leopard','Leopard']],k=>{S.print=k;rebuildGarment();renderTabBody();}));
+    body.appendChild(optRow('Pattern',S.print,[['solid','Solid'],['stripe','Stripe'],['pinstripe','Pinstripe'],['dot','Dots'],['gingham','Gingham'],['plaid','Plaid'],['chevron','Chevron'],['houndstooth','Houndstooth'],['floral','Floral'],['star','Stars'],['camo','Camo'],['leopard','Leopard']],k=>{S.print=k;rebuildGarment();renderTabBody();},'The printed design on the cloth. <b>Solid</b> = plain. Pick a pattern, then set its two colours and size below.'));
     if(S.print!=='solid'){
-      const c1=document.createElement('div');c1.className='field';c1.innerHTML='<label>Pattern color</label>';c1.appendChild(swatchRow(S.printC1,c=>{S.printC1=c;rebuildGarment();}));body.appendChild(c1);
-      const c2=document.createElement('div');c2.className='field';c2.innerHTML='<label>Background color</label>';c2.appendChild(swatchRow(S.printC2,c=>{S.printC2=c;rebuildGarment();}));body.appendChild(c2);
-      body.appendChild(rangeRow('Pattern scale',S.printScale,0.4,3,0.05,v=>{S.printScale=v;rebuildGarment();}));
+      const c1=document.createElement('div');c1.className='field';const l1=document.createElement('label');l1.textContent='Pattern color';l1.appendChild(infoDot('The colour of the pattern shapes (the stripes, dots, flowers…).'));c1.appendChild(l1);c1.appendChild(swatchRow(S.printC1,c=>{S.printC1=c;rebuildGarment();}));body.appendChild(c1);
+      const c2=document.createElement('div');c2.className='field';const l2=document.createElement('label');l2.textContent='Background color';l2.appendChild(infoDot('The colour behind the pattern.'));c2.appendChild(l2);c2.appendChild(swatchRow(S.printC2,c=>{S.printC2=c;rebuildGarment();}));body.appendChild(c2);
+      body.appendChild(rangeRow('Pattern scale',S.printScale,0.4,3,0.05,v=>{S.printScale=v;rebuildGarment();},'How big the pattern repeats — small = tiny busy print, large = big bold motifs.'));
     }
   }
   else if(curTab==='cut'){
     if(S.garment==='dress'||S.garment==='skirt'){
-      body.appendChild(optRow('Length',S.length,[['mini','Mini'],['knee','Knee'],['midi','Midi'],['maxi','Maxi']],k=>{S.length=k;rebuildGarment();renderTabBody();}));
-      body.appendChild(optRow('Silhouette',S.flare,[['pencil','Pencil'],['straight','Straight'],['aline','A-line'],['full','Full'],['tent','Circle']],k=>{S.flare=k;rebuildGarment();renderTabBody();}));
+      body.appendChild(optRow('Length',S.length,[['mini','Mini'],['knee','Knee'],['midi','Midi'],['maxi','Maxi']],k=>{S.length=k;rebuildGarment();renderTabBody();},'How far down the hem falls — from <b>Mini</b> up high to floor-length <b>Maxi</b>.'));
+      body.appendChild(optRow('Silhouette',S.flare,[['pencil','Pencil'],['straight','Straight'],['aline','A-line'],['full','Full'],['tent','Circle']],k=>{S.flare=k;rebuildGarment();renderTabBody();},'The overall shape. <b>Pencil</b> is straight & narrow, <b>A-line</b> flares gently, <b>Circle</b> is very full and swishy.'));
     }
     if(S.garment==='dress'||S.garment==='top'){
-      body.appendChild(optRow('Neckline',S.neckline,[['scoop','Scoop'],['vneck','V-neck'],['sweetheart','Sweetheart'],['square','Square'],['boat','Boat'],['halter','Halter'],['offshoulder','Off-shoulder'],['crew','Straight']],k=>{S.neckline=k;rebuildGarment();renderTabBody();}));
-      body.appendChild(optRow('Sleeve',S.sleeve,[['strap','Straps'],['cap','Cap'],['short','Short'],['long','Long'],['none','Strapless']],k=>{S.sleeve=k;rebuildGarment();renderTabBody();}));
-      body.appendChild(optRow('Collar',S.collar,[['none','None'],['mock','Mock'],['turtle','Turtleneck']],k=>{S.collar=k;rebuildGarment();renderTabBody();}));
+      body.appendChild(optRow('Neckline',S.neckline,[['scoop','Scoop'],['vneck','V-neck'],['sweetheart','Sweetheart'],['square','Square'],['boat','Boat'],['halter','Halter'],['offshoulder','Off-shoulder'],['crew','Straight']],k=>{S.neckline=k;rebuildGarment();renderTabBody();},'The shape of the top edge around the neck & shoulders. <b>Sweetheart</b> dips like a heart, <b>Off-shoulder</b> sits low all around.'));
+      body.appendChild(optRow('Sleeve',S.sleeve,[['strap','Straps'],['cap','Cap'],['short','Short'],['long','Long'],['none','Strapless']],k=>{S.sleeve=k;rebuildGarment();renderTabBody();},'Straps, short or long sleeves, or <b>Strapless</b>.'));
+      body.appendChild(optRow('Collar',S.collar,[['none','None'],['mock','Mock'],['turtle','Turtleneck']],k=>{S.collar=k;rebuildGarment();renderTabBody();},'Adds a stand-up neck. <b>Mock</b> is short; <b>Turtleneck</b> is taller and folds over.'));
     }
     if(S.garment==='pants'){
-      body.appendChild(optRow('Length',S.length,[['crop','Cropped'],['maxi','Full']],k=>{S.length=k;rebuildGarment();renderTabBody();}));
-      body.appendChild(optRow('Fit',S.silhouette,[['skinny','Skinny'],['straight','Straight'],['wide','Wide'],['flare','Flare']],k=>{S.silhouette=k;rebuildGarment();renderTabBody();}));
+      body.appendChild(optRow('Length',S.length,[['crop','Cropped'],['maxi','Full']],k=>{S.length=k;rebuildGarment();renderTabBody();},'Full-length or shorter Cropped legs.'));
+      body.appendChild(optRow('Fit',S.silhouette,[['skinny','Skinny'],['straight','Straight'],['wide','Wide'],['flare','Flare']],k=>{S.silhouette=k;rebuildGarment();renderTabBody();},'How wide the legs are — from tight <b>Skinny</b> to loose <b>Wide</b>.'));
     }
   }
   else if(curTab==='details'){
     if(S.garment!=='top'){
-      body.appendChild(optRow('Pleats',S.pleats,[['none','None'],['soft','Soft'],['knife','Knife'],['box','Box'],['accordion','Accordion']],k=>{S.pleats=k;rebuildGarment();renderTabBody();}));
-      body.appendChild(optRow('Hem',S.hem,[['plain','Plain'],['rolled','Rolled'],['scallop','Scalloped'],['handkerchief','Handkerchief'],['asym','Asymmetric']],k=>{S.hem=k;rebuildGarment();renderTabBody();}));
+      body.appendChild(optRow('Pleats',S.pleats,[['none','None'],['soft','Soft'],['knife','Knife'],['box','Box'],['accordion','Accordion']],k=>{S.pleats=k;rebuildGarment();renderTabBody();},'Folds pressed into the fabric all the way around. <b>Knife</b> = sharp one-way folds, <b>Accordion</b> = many fine folds.'));
+      body.appendChild(optRow('Hem',S.hem,[['plain','Plain'],['rolled','Rolled'],['scallop','Scalloped'],['handkerchief','Handkerchief'],['asym','Asymmetric']],k=>{S.hem=k;rebuildGarment();renderTabBody();},'The bottom edge style. <b>Scalloped</b> is wavy, <b>Handkerchief</b> has points, <b>Asymmetric</b> is longer on one side.'));
     }
-    body.appendChild(optRow('Waistband',S.waistband,[['none','None'],['slim','Slim'],['wide','Wide']],k=>{S.waistband=k;rebuildGarment();renderTabBody();}));
-    if(S.waistband!=='none'){const wc=document.createElement('div');wc.className='field';wc.innerHTML='<label>Waistband color</label>';wc.appendChild(swatchRow(S.waistColor,c=>{S.waistColor=c;rebuildGarment();}));body.appendChild(wc);}
-    body.appendChild(optRow('Trim',S.trim,[['none','None'],['band','Hem band'],['piping','Piping']],k=>{S.trim=k;rebuildGarment();renderTabBody();}));
-    if(S.trim!=='none'){const tc=document.createElement('div');tc.className='field';tc.innerHTML='<label>Trim color</label>';tc.appendChild(swatchRow(S.trimColor,c=>{S.trimColor=c;rebuildGarment();}));body.appendChild(tc);}
+    body.appendChild(optRow('Waistband',S.waistband,[['none','None'],['slim','Slim'],['wide','Wide']],k=>{S.waistband=k;rebuildGarment();renderTabBody();},'A band of fabric sewn at the waist, with its own colour.'));
+    if(S.waistband!=='none'){const wc=document.createElement('div');wc.className='field';const wl=document.createElement('label');wl.textContent='Waistband color';wc.appendChild(wl);wc.appendChild(swatchRow(S.waistColor,c=>{S.waistColor=c;rebuildGarment();}));body.appendChild(wc);}
+    body.appendChild(optRow('Trim',S.trim,[['none','None'],['band','Hem band'],['piping','Piping']],k=>{S.trim=k;rebuildGarment();renderTabBody();},'A decorative edge at the hem — a contrast <b>Band</b> or a rounded <b>Piping</b> cord.'));
+    if(S.trim!=='none'){const tc=document.createElement('div');tc.className='field';const tl=document.createElement('label');tl.textContent='Trim color';tc.appendChild(tl);tc.appendChild(swatchRow(S.trimColor,c=>{S.trimColor=c;rebuildGarment();}));body.appendChild(tc);}
     if(S.garment!=='top'){
-      body.appendChild(optRow('Belt',S.belt,[['none','None'],['slim','Slim'],['wide','Wide']],k=>{S.belt=k;rebuildGarment();renderTabBody();}));
-      if(S.belt!=='none'){const bc=document.createElement('div');bc.className='field';bc.innerHTML='<label>Belt color</label>';bc.appendChild(swatchRow(S.beltColor,c=>{S.beltColor=c;rebuildGarment();}));body.appendChild(bc);}
+      body.appendChild(optRow('Belt',S.belt,[['none','None'],['slim','Slim'],['wide','Wide']],k=>{S.belt=k;rebuildGarment();renderTabBody();},'A belt with a metal buckle, worn on top at the waist.'));
+      if(S.belt!=='none'){const bc=document.createElement('div');bc.className='field';const bl=document.createElement('label');bl.textContent='Belt color';bc.appendChild(bl);bc.appendChild(swatchRow(S.beltColor,c=>{S.beltColor=c;rebuildGarment();}));body.appendChild(bc);}
     }
     if(S.garment==='skirt'||S.garment==='pants'){
-      body.appendChild(optRow('Pockets',S.pockets,[['none','None'],['patch','Patch']],k=>{S.pockets=k;rebuildGarment();renderTabBody();}));
+      body.appendChild(optRow('Pockets',S.pockets,[['none','None'],['patch','Patch']],k=>{S.pockets=k;rebuildGarment();renderTabBody();},'Adds <b>patch</b> pockets on the front.'));
     }
-    body.appendChild(optRow('Topstitching',S.topstitch?'on':'off',[['off','Off'],['on','On']],k=>{S.topstitch=(k==='on');rebuildGarment();renderTabBody();}));
-    if(S.topstitch){const sc=document.createElement('div');sc.className='field';sc.innerHTML='<label>Stitch color</label>';sc.appendChild(swatchRow(S.stitchColor,c=>{S.stitchColor=c;rebuildGarment();}));body.appendChild(sc);}
+    body.appendChild(optRow('Topstitching',S.topstitch?'on':'off',[['off','Off'],['on','On']],k=>{S.topstitch=(k==='on');rebuildGarment();renderTabBody();},'Contrast stitching lines along edges & pockets — like the gold stitching on real jeans.'));
+    if(S.topstitch){const sc=document.createElement('div');sc.className='field';const sl=document.createElement('label');sl.textContent='Stitch color';sc.appendChild(sl);sc.appendChild(swatchRow(S.stitchColor,c=>{S.stitchColor=c;rebuildGarment();}));body.appendChild(sc);}
   }
 }
 
@@ -682,6 +767,83 @@ $('#resetBtn').onclick=()=>{controls.autoRotate=false;$('#rotBtn').classList.rem
 $('#exportBtn').onclick=()=>{renderer.render(scene,camera);const a=document.createElement('a');a.href=renderer.domElement.toDataURL('image/png');a.download=(S.garment+'-design')+'.png';a.click();toast('Exported PNG ⤓');};
 $('#saveBtn').onclick=async()=>{const n=prompt('Name this design:',S.garment.charAt(0).toUpperCase()+S.garment.slice(1)+' design');if(n===null)return;await apiSave(n||'Untitled');renderLooks();toast('Saved ♥');};
 window.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&history.length){S=JSON.parse(history.pop());applyAll();}});
+
+/* ================= guide & example outfits ================= */
+const PRESETS=[
+  {name:'Midnight Satin Gown', desc:'A glossy floor-length evening dress.',
+   recipe:['Garment → <b>Dress</b>','Fabric → <b>Satin</b>, deep plum, finish nudged shiny','Cut → <b>Maxi</b> length, <b>Full</b> silhouette, <b>Sweetheart</b> neckline, <b>Straps</b>','Details → <b>Wide belt</b> with buckle','Studio → Rose backdrop + Runway light'],
+   state:{garment:'dress',fabric:'satin',color:'#3b1d4e',finish:.55,print:'solid',length:'maxi',flare:'full',neckline:'sweetheart',sleeve:'strap',pleats:'none',hem:'plain',waistband:'none',belt:'wide',beltColor:'#161019',collar:'none',trim:'none',pockets:'none',topstitch:false,backdrop:'rose',light:'runway'}},
+  {name:'Denim Pleated Skirt', desc:'Everyday knee-length skirt in denim.',
+   recipe:['Garment → <b>Skirt</b>','Fabric → <b>Denim</b> (see the woven twill)','Cut → <b>Knee</b> length, <b>A-line</b>','Details → <b>Knife pleats</b>, <b>Wide waistband</b>, <b>Patch pockets</b>','Details → <b>Topstitching</b> in gold thread'],
+   state:{garment:'skirt',fabric:'denim',color:'#31517f',finish:.35,print:'solid',length:'knee',flare:'aline',pleats:'knife',hem:'plain',waistband:'wide',waistColor:'#26405f',pockets:'patch',topstitch:true,stitchColor:'#e8b15a',belt:'none',trim:'none',backdrop:'slate',light:'studio'}},
+  {name:'Daisy Sundress', desc:'Light floral dress for summer.',
+   recipe:['Garment → <b>Dress</b>, Fabric <b>Cotton</b> in white','Print → <b>Floral</b>, pink flowers on cream','Cut → <b>Midi</b>, <b>A-line</b>, <b>Scoop</b> neck, <b>Cap</b> sleeves','Details → slim pink waistband'],
+   state:{garment:'dress',fabric:'cotton',color:'#ffffff',finish:.3,print:'floral',printC1:'#e0567f',printC2:'#fff4f8',printScale:1,length:'midi',flare:'aline',neckline:'scoop',sleeve:'cap',pleats:'none',hem:'plain',waistband:'slim',waistColor:'#e0567f',belt:'none',trim:'none',collar:'none',pockets:'none',topstitch:false,backdrop:'warm',light:'soft'}},
+  {name:'Cozy Turtleneck', desc:'A soft knit top with a folded collar.',
+   recipe:['Garment → <b>Top</b>, Fabric <b>Wool</b>','Cut → <b>Long</b> sleeves','Cut → <b>Turtleneck</b> collar','Try the Finish slider all the way to matte'],
+   state:{garment:'top',fabric:'wool',color:'#7a2233',finish:.15,print:'solid',neckline:'crew',sleeve:'long',collar:'turtle',backdrop:'charcoal',light:'studio'}},
+  {name:'Tartan Party Dress', desc:'Plaid wool dress with a full skirt.',
+   recipe:['Garment → <b>Dress</b>, Fabric <b>Wool</b>','Print → <b>Plaid</b> (tartan), black on red, scale up a little','Cut → <b>Knee</b>, <b>Full</b>, <b>Long</b> sleeves, <b>Mock</b> collar','Details → slim black belt'],
+   state:{garment:'dress',fabric:'wool',color:'#7a2233',finish:.3,print:'plaid',printC1:'#141414',printC2:'#7a2233',printScale:1.4,length:'knee',flare:'full',neckline:'crew',sleeve:'long',collar:'mock',pleats:'none',hem:'plain',waistband:'none',belt:'slim',beltColor:'#141414',trim:'none',pockets:'none',topstitch:false,backdrop:'slate',light:'moody'}},
+];
+const GLOSSARY=[
+  ['Dress form','The neutral tailor’s mannequin the clothes sit on. It has no arms on purpose, so nothing distracts from the garment.'],
+  ['Fabric','The material — each one has its own shine, weave and weight (denim, satin, wool, leather, silk…).'],
+  ['Finish','Makes the surface more matte or more shiny without changing the fabric.'],
+  ['Silhouette','The garment’s overall shape: pencil (narrow) → A-line → full → circle (very swishy).'],
+  ['Neckline','The shape of the top edge around the neck and shoulders.'],
+  ['Pleats','Folds pressed into the fabric all the way around.'],
+  ['Hem','The bottom edge — plain, rolled, wavy scallops, points, or uneven.'],
+  ['Waistband / Belt','A band at the waist. A belt sits on top and has a buckle.'],
+  ['Topstitching','Contrast stitch lines along edges, like the gold stitching on jeans.'],
+];
+function loadPreset(p){ pushHistory(); S=Object.assign(DEFAULT_STATE(),JSON.parse(JSON.stringify(p.state))); applyAll(); closeGuide(); toast('Loaded “'+p.name+'” — now tweak it!'); }
+function renderGuide(){
+  const b=$('#guideBody');b.innerHTML='';
+  b.insertAdjacentHTML('beforeend',`<h4 class="sec-t">The idea</h4><p class="intro">Design clothes on a dress form. Choose a garment, then style its fabric, colour, pattern, shape and finishing details — spin it around to see it in 3D, and save the looks you love. Tap any <span class="info" style="cursor:default">i</span> circle in the panels for a quick explanation.</p>`);
+  b.insertAdjacentHTML('beforeend',`<h4 class="sec-t">How designing works</h4>`);
+  const steps=[
+    ['1','Pick a <b>Garment</b> on the left — Dress, Top, Skirt or Pants.'],
+    ['2','<b>Fabric</b> tab — choose the material, its colour, and matte→shiny finish.'],
+    ['3','<b>Print</b> tab — add a pattern (or leave Solid) and set its two colours.'],
+    ['4','<b>Cut</b> tab — set length, silhouette, neckline, sleeves.'],
+    ['5','<b>Details</b> tab — pleats, hem, waistband, belt, pockets, topstitching.'],
+    ['6','Spin the form to check it, then <b>♥ Save design</b> (or <b>⬇ Export</b> a picture).'],
+  ];
+  const sd=document.createElement('div');sd.className='steps';
+  steps.forEach(([n,t])=>{const s=document.createElement('div');s.className='step';s.innerHTML=`<div class="stepn">${n}</div><div>${t}</div>`;sd.appendChild(s);});
+  b.appendChild(sd);
+  b.insertAdjacentHTML('beforeend',`<h4 class="sec-t">Example outfits — tap Load, then tinker</h4>`);
+  const ex=document.createElement('div');ex.className='examples';
+  PRESETS.forEach(p=>{const card=document.createElement('div');card.className='ex';
+    card.innerHTML=`<h5>${p.name}</h5><div class="desc">${p.desc}</div><ol>${p.recipe.map(r=>`<li>${r}</li>`).join('')}</ol>`;
+    const btn=document.createElement('button');btn.className='load';btn.textContent='Load this outfit';btn.onclick=()=>loadPreset(p);
+    card.appendChild(btn);ex.appendChild(card);});
+  b.appendChild(ex);
+  b.insertAdjacentHTML('beforeend',`<h4 class="sec-t">Quick glossary</h4>`);
+  const gl=document.createElement('div');gl.className='glossary';
+  GLOSSARY.forEach(([t,d])=>{const g=document.createElement('div');g.className='gl';g.innerHTML=`<b>${t}:</b> ${d}`;gl.appendChild(g);});
+  b.appendChild(gl);
+}
+function openGuide(){ renderGuide(); $('#guideOverlay').classList.add('show'); }
+function closeGuide(){ $('#guideOverlay').classList.remove('show'); }
+$('#guideBtn').onclick=openGuide;
+$('#installBtn').onclick=async()=>{ if(!deferredPrompt)return; deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; $('#installBtn').style.display='none'; };
+$('#guideClose').onclick=closeGuide;
+$('#guideOverlay').onclick=(e)=>{ if(e.target.id==='guideOverlay')closeGuide(); };
+window.addEventListener('keydown',e=>{ if(e.key==='Escape')closeGuide(); });
+
+/* ================= installable app (PWA) ================= */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); });
+}
+// "Install app" button appears when the browser allows installing
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',(e)=>{
+  e.preventDefault(); deferredPrompt=e;
+  const btn=document.getElementById('installBtn'); if(btn) btn.style.display='inline-flex';
+});
+window.addEventListener('appinstalled',()=>{ const btn=document.getElementById('installBtn'); if(btn) btn.style.display='none'; });
 
 /* ================= boot ================= */
 initScene();

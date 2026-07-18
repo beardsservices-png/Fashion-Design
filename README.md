@@ -25,6 +25,24 @@ and are shared across every device that opens the site.
 - Rotate (drag), zoom (scroll), and **click a part** to jump to its options.
 - **Save** designs, reopen them, **Export** a PNG, and **Undo** (Ctrl/⌘-Z).
 
+## Help built in
+
+- **ⓘ info circles** next to every control explain what it does in plain English (tap/hover).
+- **? Guide & examples** (top bar) opens a walkthrough of how designing works, a
+  glossary, and several **example outfits** — each with a step-by-step recipe and a
+  one-tap **Load this outfit** button so you can open a finished look and tinker.
+
+## Install it like an app (PWA)
+
+The studio is a Progressive Web App, so it can be installed to a phone or desktop
+and launched from the home screen / dock — it even works offline (your saved
+designs still need the server to sync across devices).
+
+- **Desktop Chrome/Edge:** click the **⤓ Install app** button in the top bar (or the
+  install icon in the address bar).
+- **iPhone/iPad (Safari):** Share → **Add to Home Screen**.
+- **Android (Chrome):** menu → **Install app** / **Add to Home Screen**.
+
 ## Run it locally
 
 Requires Node 18+.
