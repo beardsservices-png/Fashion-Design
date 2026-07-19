@@ -140,11 +140,53 @@
   .gl{font-size:12.5px;color:#c4c9d6;line-height:1.45}.gl b{color:var(--ink)}
   @media(max-width:620px){.examples{grid-template-columns:1fr}}
 
-  @media(max-width:1000px){
-    main{grid-template-columns:1fr}
-    .side{position:absolute;top:0;bottom:0;width:240px;z-index:8;opacity:.98}
-    .side.left{left:0}.side.right{right:0}
-    #view{grid-column:1}
+  /* bottom tab bar (mobile only) */
+  .mobilebar{display:none}
+
+  /* tablet: slimmer side columns */
+  @media(max-width:1000px) and (min-width:821px){
+    main{grid-template-columns:184px 1fr 264px}
+  }
+
+  /* phone: full-screen 3D + slide-up bottom sheets */
+  @media(max-width:820px){
+    .app{grid-template-rows:auto 1fr}
+    main{display:block;position:relative}
+    #view{position:absolute;inset:0}
+    header{gap:7px;padding:8px 10px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
+    header::-webkit-scrollbar{display:none}
+    .brand small{display:none}
+    .brand h1{font-size:14px;letter-spacing:2px}
+    .brand .mk{width:30px;height:30px;font-size:17px}
+    .sp{display:none}
+    .tbtn{padding:8px 11px;font-size:12px;flex:0 0 auto}
+    .viewhud{display:none}
+
+    .side{
+      position:fixed;left:0;right:0;bottom:0;top:auto;width:auto;
+      max-height:66vh;border:none;border-top:1px solid var(--line);
+      border-radius:18px 18px 0 0;box-shadow:0 -18px 50px rgba(0,0,0,.55);
+      transform:translateY(105%);transition:transform .3s cubic-bezier(.32,.72,0,1);
+      z-index:60;padding-bottom:84px;
+    }
+    .side.left{border-left:none}
+    .side::before{content:"";display:block;width:42px;height:4px;border-radius:3px;background:#3a3f4d;margin:9px auto 2px}
+    .garments{grid-template-columns:repeat(3,1fr)}
+    .swatches{grid-template-columns:repeat(9,1fr)}
+    .opt,.tab{padding:9px 12px;font-size:12.5px}
+
+    .mobilebar{
+      display:flex;position:fixed;left:0;right:0;bottom:0;z-index:65;gap:8px;
+      background:#121319;border-top:1px solid var(--line);
+      padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+    }
+    .mobilebar button{
+      flex:1;background:#1b1e27;border:1px solid var(--line);color:var(--ink);
+      border-radius:11px;padding:12px 6px;font-size:13px;font-weight:700;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;gap:6px;
+    }
+    .mobilebar button.active{border-color:var(--accent);color:var(--accent);background:#221f18}
+    .modal{max-height:90vh}
   }
 </style>
 </head>
@@ -203,6 +245,12 @@
       </div>
     </aside>
   </main>
+
+  <nav class="mobilebar" id="mobilebar">
+    <button data-panel="left">◫ Garment</button>
+    <button data-panel="right">✎ Style</button>
+    <button id="mSave">♥ Save</button>
+  </nav>
 </div>
 
 <script type="importmap">
@@ -789,6 +837,10 @@ function wireClick(){
     if(hits.length){const p=hits[0].object.userData.part;
       if(p==='waist'||p==='trim'){curTab='details';} else {curTab='fabric';}
       renderTabs();
+      if(window.matchMedia('(max-width:820px)').matches){
+        const R=document.querySelector('.side.right'),L=document.querySelector('.side.left');
+        L.classList.remove('open');R.classList.add('open');syncSheets();updateBar();
+      }
     }
   });
 }
@@ -897,6 +949,28 @@ $('#installBtn').onclick=async()=>{ if(!deferredPrompt)return; deferredPrompt.pr
 $('#guideClose').onclick=closeGuide;
 $('#guideOverlay').onclick=(e)=>{ if(e.target.id==='guideOverlay')closeGuide(); };
 window.addEventListener('keydown',e=>{ if(e.key==='Escape')closeGuide(); });
+
+/* ================= mobile bottom sheets ================= */
+const mbar=$('#mobilebar');
+function isPhone(){ return window.matchMedia('(max-width:820px)').matches; }
+function syncSheets(){ // drive transforms with inline styles (bulletproof vs. cascade quirks)
+  const phone=isPhone();
+  document.querySelectorAll('.side').forEach(s=>{
+    if(phone) s.style.transform = s.classList.contains('open') ? 'translateY(0)' : 'translateY(105%)';
+    else s.style.transform='';
+  });
+}
+function updateBar(){ mbar.querySelectorAll('[data-panel]').forEach(btn=>{ const s=document.querySelector('.side.'+btn.dataset.panel); btn.classList.toggle('active', !!s&&s.classList.contains('open')); }); }
+function openSheet(which){
+  const L=document.querySelector('.side.left'), R=document.querySelector('.side.right');
+  const target=which==='left'?L:R, other=which==='left'?R:L;
+  other.classList.remove('open'); target.classList.toggle('open'); target.scrollTop=0; syncSheets(); updateBar();
+}
+function closeSheets(){ document.querySelectorAll('.side').forEach(s=>s.classList.remove('open')); syncSheets(); updateBar(); }
+window.addEventListener('resize',syncSheets);
+syncSheets();
+mbar.querySelectorAll('[data-panel]').forEach(btn=>btn.onclick=()=>openSheet(btn.dataset.panel));
+$('#mSave').onclick=()=>$('#saveBtn').click();
 
 /* ================= installable app (PWA) ================= */
 if('serviceWorker' in navigator){
