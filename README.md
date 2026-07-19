@@ -11,7 +11,11 @@ and are shared across every device that opens the site.
 
 ## What you can design
 
-- **Garments:** Dress, Top, Skirt, Pants — each fully editable.
+- **Garments:** Dress, Top, Skirt, Pants, and **Jacket** (open-front blazer/coat
+  with lapels, a collar, buttons, and long sleeves) — each fully editable.
+- **Dress form with optional arms:** the form is armless by default (keeps the
+  focus on the garment); turn **Arms** on so sleeves and jackets have something
+  to rest on and short sleeves show the arm below.
 - **Fabric (the star):** Cotton, Linen, Denim, Silk, Satin, Leather, Wool,
   Velvet, Sequin, Tulle — each with its own realistic sheen, roughness, and a
   woven **surface texture** (denim twill, knit ribbing, leather grain, etc.).

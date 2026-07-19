@@ -358,12 +358,23 @@ function buildForm(finish){
   const poleMat=new THREE.MeshStandardMaterial({color:0x9a9ba2,roughness:.35,metalness:.9});
   const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.022,0.022,0.82,20),poleMat);pole.position.y=-0.9;pole.castShadow=true;formGroup.add(pole);
   const base=new THREE.Mesh(new THREE.CylinderGeometry(0.26,0.3,0.05,40),poleMat);base.position.y=-1.3;base.castShadow=true;base.receiveShadow=true;formGroup.add(base);
+  // optional arms (so sleeves have something to sit on)
+  if(typeof S!=='undefined' && S.arms){
+    [-1,1].forEach(sx=>{
+      // rounded shoulder cap + tapered arm in one, tucked under sleeves
+      const arm=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.032,0.62,20),mat);
+      arm.position.set(sx*0.185,0.13,0);arm.rotation.z=sx*0.05;arm.castShadow=true;arm.receiveShadow=true;formGroup.add(arm);
+      const cap=new THREE.Mesh(new THREE.SphereGeometry(0.05,20,16),mat);cap.position.set(sx*0.185,0.44,0);cap.castShadow=true;formGroup.add(cap);
+      const hand=new THREE.Mesh(new THREE.SphereGeometry(0.036,16,14),mat);hand.position.set(sx*0.205,-0.18,0);hand.castShadow=true;formGroup.add(hand);
+    });
+  }
   scene.add(formGroup);
 }
 
 /* ================= garment geometry ================= */
 function buildTube({y0,y1,r0,r1,pleatN=0,pleatDepth=0,pleatShape='soft',hemStyle='plain',hemPoints=8,hemAmp=0,
-                    foldN=0,foldDepth=0,neck=null, front=1, RS=120, HS=48, uvY=3, taperEase=1.4}){
+                    foldN=0,foldDepth=0,neck=null, front=1, RS=120, HS=48, uvY=3, taperEase=1.4,
+                    aStart=0, aEnd=Math.PI*2}){
   const pos=[],uv=[],idx=[];
   // precompute ring radius/height + accumulated slant distance for real-world UVs
   const Rj=[],Yj=[],SV=[];let acc=0;
@@ -373,7 +384,7 @@ function buildTube({y0,y1,r0,r1,pleatN=0,pleatDepth=0,pleatShape='soft',hemStyle
     const t=j/HS;
     const te=Math.pow(t,taperEase);
     for(let i=0;i<=RS;i++){
-      const a=i/RS*Math.PI*2;
+      const a=aStart+(i/RS)*(aEnd-aStart);
       let baseR=lerp(r0,r1,te);
       if(pleatN){
         let w;
@@ -406,7 +417,7 @@ function buildTube({y0,y1,r0,r1,pleatN=0,pleatDepth=0,pleatShape='soft',hemStyle
         else if(neck==='offshoulder') cut = topEdge*0.07; // drops all the way round (bandeau)
         y -= cut;
       }
-      pos.push(x,y,z); uv.push((i/RS)*2*Math.PI*Rj[j], SV[j]); // UVs in metres (undistorted)
+      pos.push(x,y,z); uv.push((i/RS)*(aEnd-aStart)*Rj[j], SV[j]); // UVs in metres (undistorted)
     }
   }
   for(let j=0;j<HS;j++)for(let i=0;i<RS;i++){const A=j*(RS+1)+i,B=A+1,C=A+(RS+1),D=C+1;idx.push(A,C,B,B,C,D);}
@@ -437,7 +448,7 @@ function makeFabricMat(fabricKey, color, printKind, printC1, printC2, printScale
 
 /* ================= state ================= */
 const DEFAULT_STATE=()=>({
-  garment:'dress', form:'linen', backdrop:'charcoal', light:'studio',
+  garment:'dress', form:'linen', arms:false, backdrop:'charcoal', light:'studio',
   fabric:'satin', color:'#b7295a', finish:.45,
   print:'solid', printC1:'#ffffff', printC2:'#b7295a', printScale:1,
   length:'midi', flare:'aline', silhouette:'straight',
@@ -445,6 +456,7 @@ const DEFAULT_STATE=()=>({
   pleats:'none', hem:'plain', waistband:'slim', waistColor:'#7a1638',
   trim:'none', trimColor:'#e8c07d',
   belt:'none', beltColor:'#2a2118', pockets:'none', topstitch:false, stitchColor:'#e8d9b0',
+  buttons:'on',
 });
 let S=DEFAULT_STATE();
 let history=[];
@@ -548,10 +560,45 @@ function rebuildGarment(){
     addPockets(-0.1,0.13);
   }
 
+  function addJacket(){
+    const topY=0.45, hemY=(S.length==='crop'?-0.02: S.length==='maxi'?-0.55: -0.22);
+    const gap=0.34; // front opening (radians, centred on front z+)
+    const front=Math.PI/2;
+    const aStart=front+gap/2, aEnd=front - gap/2 + Math.PI*2;
+    // body (open front)
+    const body=new THREE.Mesh(buildTube({y0:topY,y1:hemY,r0:0.205,r1:0.212,RS:110,HS:34,taperEase:1,foldN:S.pleats==='none'?10:0,foldDepth:S.pleats==='none'?0.012*drape:0,aStart,aEnd}),mat);
+    body.castShadow=true;body.receiveShadow=true;body.userData.part='body';garmentGroup.add(body);
+    // lapels: flat panels folding back along the two front edges
+    [ [aStart,1], [aEnd,-1] ].forEach(([edge,dir])=>{
+      const ex=Math.cos(edge)*0.205, ez=Math.sin(edge)*0.205;
+      const lap=new THREE.Mesh(new THREE.BoxGeometry(0.007,0.26,0.11),mat);
+      lap.position.set(ex*1.02, topY-0.13, ez*1.02+0.01);
+      lap.rotation.y = -edge + dir*0.5;
+      lap.rotation.x = 0.06;
+      lap.castShadow=true;lap.userData.part='body';garmentGroup.add(lap);
+    });
+    // collar band around the back of the neck
+    const collar=new THREE.Mesh(buildTube({y0:topY+0.07,y1:topY-0.02,r0:0.1,r1:0.14,RS:60,HS:5,taperEase:1,aStart:front-Math.PI+0.25,aEnd:front+Math.PI-0.25}),mat);
+    collar.castShadow=true;collar.userData.part='body';garmentGroup.add(collar);
+    // long sleeves (start above the shoulder so the sleeve head covers it)
+    const len=0.54, r1=0.05;
+    [-1,1].forEach(sx=>{const g2=buildTube({y0:topY+0.03,y1:topY+0.03-len,r0:0.094,r1,RS:40,HS:24,taperEase:1});
+      const sl=new THREE.Mesh(g2,mat);sl.position.set(sx*0.188,0,0);sl.rotation.z=sx*0.1;sl.castShadow=true;sl.receiveShadow=true;sl.userData.part='body';garmentGroup.add(sl);});
+    // buttons down the right front edge
+    if(S.buttons!=='off'){
+      const bMat=new THREE.MeshStandardMaterial({color:0x1a1a1a,roughness:.35,metalness:.5});
+      const ex=Math.cos(aStart)*0.205, ez=Math.sin(aStart)*0.205;
+      for(let k=0;k<3;k++){const y=topY-0.14-k*0.09;const bt=new THREE.Mesh(new THREE.CylinderGeometry(0.012,0.012,0.006,16),bMat);
+        bt.rotation.x=Math.PI/2;bt.position.set(ex*1.03,y,ez*1.03+0.01);bt.userData.part='trim';garmentGroup.add(bt);}
+    }
+    addPockets(-0.02,0.205);
+  }
+
   if(S.garment==='dress'){ addSkirt(0.02,0.17); addBodice(0.44,0.03); addWaistband(0.02,0.176); addBelt(0.02,0.176); addCollar(0.45); }
   else if(S.garment==='skirt'){ addSkirt(0.02,0.17); addWaistband(0.03,0.176); addBelt(0.03,0.176); }
   else if(S.garment==='top'){ addBodice(0.44,-0.12); addCollar(0.45); }
   else if(S.garment==='pants'){ addPants(); addBelt(0.03,0.168); }
+  else if(S.garment==='jacket'){ addJacket(); addBelt(-0.04,0.208); }
 
   scene.add(garmentGroup);
 }
@@ -567,10 +614,11 @@ const GICONS={
   top:'<path d="M7 4l-3 3 2 2 1-1v12h10V8l1 1 2-2-3-3-3 1a3 3 0 01-4 0z"/>',
   skirt:'<path d="M8 4h8l1 4H7zM7 8l-3 12h16L14 8"/>',
   pants:'<path d="M7 3h10l-1 18h-4l-1-9-1 9H8z"/>',
+  jacket:'<path d="M8 3l4 3 4-3 3 2-2 3v13h-4l-1-8-1 8H6V8L4 5z"/>',
 };
 function makeGarmentBtns(){
   const el=$('#garmentBtns');el.innerHTML='';
-  [['dress','Dress'],['top','Top'],['skirt','Skirt'],['pants','Pants']].forEach(([k,l])=>{
+  [['dress','Dress'],['top','Top'],['skirt','Skirt'],['pants','Pants'],['jacket','Jacket']].forEach(([k,l])=>{
     const b=document.createElement('div');b.className='gbtn'+(S.garment===k?' active':'');
     b.innerHTML=`<svg viewBox="0 0 24 24">${GICONS[k]}</svg><span>${l}</span>`;
     b.onclick=()=>{pushHistory();S.garment=k;rebuildGarment();makeGarmentBtns();renderTabs();};
@@ -670,21 +718,29 @@ function renderTabBody(){
       body.appendChild(optRow('Length',S.length,[['crop','Cropped'],['maxi','Full']],k=>{S.length=k;rebuildGarment();renderTabBody();},'Full-length or shorter Cropped legs.'));
       body.appendChild(optRow('Fit',S.silhouette,[['skinny','Skinny'],['straight','Straight'],['wide','Wide'],['flare','Flare']],k=>{S.silhouette=k;rebuildGarment();renderTabBody();},'How wide the legs are — from tight <b>Skinny</b> to loose <b>Wide</b>.'));
     }
+    if(S.garment==='jacket'){
+      body.appendChild(optRow('Length',S.length,[['crop','Cropped'],['reg','Regular'],['maxi','Long coat']],k=>{S.length=k;rebuildGarment();renderTabBody();},'Cropped blazer, regular jacket, or a long coat.'));
+    }
   }
   else if(curTab==='details'){
-    if(S.garment!=='top'){
+    if(S.garment==='jacket'){
+      body.appendChild(optRow('Buttons',S.buttons,[['on','On'],['off','Off']],k=>{S.buttons=k;rebuildGarment();renderTabBody();},'Show buttons down the front of the jacket.'));
+    }
+    if(S.garment!=='top'&&S.garment!=='jacket'){
       body.appendChild(optRow('Pleats',S.pleats,[['none','None'],['soft','Soft'],['knife','Knife'],['box','Box'],['accordion','Accordion']],k=>{S.pleats=k;rebuildGarment();renderTabBody();},'Folds pressed into the fabric all the way around. <b>Knife</b> = sharp one-way folds, <b>Accordion</b> = many fine folds.'));
       body.appendChild(optRow('Hem',S.hem,[['plain','Plain'],['rolled','Rolled'],['scallop','Scalloped'],['handkerchief','Handkerchief'],['asym','Asymmetric']],k=>{S.hem=k;rebuildGarment();renderTabBody();},'The bottom edge style. <b>Scalloped</b> is wavy, <b>Handkerchief</b> has points, <b>Asymmetric</b> is longer on one side.'));
     }
-    body.appendChild(optRow('Waistband',S.waistband,[['none','None'],['slim','Slim'],['wide','Wide']],k=>{S.waistband=k;rebuildGarment();renderTabBody();},'A band of fabric sewn at the waist, with its own colour.'));
-    if(S.waistband!=='none'){const wc=document.createElement('div');wc.className='field';const wl=document.createElement('label');wl.textContent='Waistband color';wc.appendChild(wl);wc.appendChild(swatchRow(S.waistColor,c=>{S.waistColor=c;rebuildGarment();}));body.appendChild(wc);}
+    if(S.garment==='dress'||S.garment==='skirt'||S.garment==='pants'){
+      body.appendChild(optRow('Waistband',S.waistband,[['none','None'],['slim','Slim'],['wide','Wide']],k=>{S.waistband=k;rebuildGarment();renderTabBody();},'A band of fabric sewn at the waist, with its own colour.'));
+      if(S.waistband!=='none'){const wc=document.createElement('div');wc.className='field';const wl=document.createElement('label');wl.textContent='Waistband color';wc.appendChild(wl);wc.appendChild(swatchRow(S.waistColor,c=>{S.waistColor=c;rebuildGarment();}));body.appendChild(wc);}
+    }
     body.appendChild(optRow('Trim',S.trim,[['none','None'],['band','Hem band'],['piping','Piping']],k=>{S.trim=k;rebuildGarment();renderTabBody();},'A decorative edge at the hem — a contrast <b>Band</b> or a rounded <b>Piping</b> cord.'));
     if(S.trim!=='none'){const tc=document.createElement('div');tc.className='field';const tl=document.createElement('label');tl.textContent='Trim color';tc.appendChild(tl);tc.appendChild(swatchRow(S.trimColor,c=>{S.trimColor=c;rebuildGarment();}));body.appendChild(tc);}
     if(S.garment!=='top'){
       body.appendChild(optRow('Belt',S.belt,[['none','None'],['slim','Slim'],['wide','Wide']],k=>{S.belt=k;rebuildGarment();renderTabBody();},'A belt with a metal buckle, worn on top at the waist.'));
       if(S.belt!=='none'){const bc=document.createElement('div');bc.className='field';const bl=document.createElement('label');bl.textContent='Belt color';bc.appendChild(bl);bc.appendChild(swatchRow(S.beltColor,c=>{S.beltColor=c;rebuildGarment();}));body.appendChild(bc);}
     }
-    if(S.garment==='skirt'||S.garment==='pants'){
+    if(S.garment==='skirt'||S.garment==='pants'||S.garment==='jacket'){
       body.appendChild(optRow('Pockets',S.pockets,[['none','None'],['patch','Patch']],k=>{S.pockets=k;rebuildGarment();renderTabBody();},'Adds <b>patch</b> pockets on the front.'));
     }
     body.appendChild(optRow('Topstitching',S.topstitch?'on':'off',[['off','Off'],['on','On']],k=>{S.topstitch=(k==='on');rebuildGarment();renderTabBody();},'Contrast stitching lines along edges & pockets — like the gold stitching on real jeans.'));
@@ -697,6 +753,15 @@ function renderLeftExtras(){
   [['linen','Linen'],['dark','Charcoal'],['black','Black'],['mauve','Mauve']].forEach(([k,l])=>{
     const b=document.createElement('div');b.className='opt'+(S.form===k?' active':'');b.textContent=l;
     b.onclick=()=>{S.form=k;buildForm(k);renderLeftExtras();};fo.appendChild(b);});
+  // arms toggle
+  const armWrap=document.createElement('div');armWrap.style.marginTop='9px';
+  const al=document.createElement('label');al.style.cssText='font-size:10.5px;font-weight:700;color:var(--muted);letter-spacing:.6px;text-transform:uppercase;display:block;margin-bottom:5px';
+  al.textContent='Arms';al.appendChild(infoDot('Adds arms to the form so sleeves have something to rest on — great for jackets and long sleeves.'));
+  armWrap.appendChild(al);
+  const ao=document.createElement('div');ao.className='opts';
+  [['off','Off'],['on','On']].forEach(([k,l])=>{const b=document.createElement('div');b.className='opt'+((S.arms?'on':'off')===k?' active':'');b.textContent=l;
+    b.onclick=()=>{S.arms=(k==='on');buildForm(S.form);renderLeftExtras();};ao.appendChild(b);});
+  armWrap.appendChild(ao);fo.appendChild(armWrap);
   const bo=$('#bgOpts');bo.innerHTML='';
   [['charcoal','Charcoal'],['slate','Slate'],['warm','Warm'],['rose','Rose'],['white','White']].forEach(([k,l])=>{
     const b=document.createElement('div');b.className='opt'+(S.backdrop===k?' active':'');b.textContent=l;
