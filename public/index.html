@@ -142,6 +142,7 @@
 
   /* bottom tab bar (mobile only) */
   .mobilebar{display:none}
+  .sheet-handle{display:none}
 
   /* tablet: slimmer side columns */
   @media(max-width:1000px) and (min-width:821px){
@@ -170,7 +171,13 @@
       z-index:60;padding-bottom:84px;
     }
     .side.left{border-left:none}
-    .side::before{content:"";display:block;width:42px;height:4px;border-radius:3px;background:#3a3f4d;margin:9px auto 2px}
+    /* grabbable drag handle (swipe down to close) */
+    .sheet-handle{
+      display:block;position:sticky;top:0;z-index:3;height:30px;background:var(--panel);
+      cursor:grab;touch-action:none;border-radius:18px 18px 0 0;
+    }
+    .sheet-handle:active{cursor:grabbing}
+    .sheet-handle::before{content:"";display:block;width:46px;height:5px;border-radius:3px;background:#3a3f4d;margin:11px auto 0}
     .garments{grid-template-columns:repeat(3,1fr)}
     .swatches{grid-template-columns:repeat(9,1fr)}
     .opt,.tab{padding:9px 12px;font-size:12.5px}
@@ -971,6 +978,41 @@ window.addEventListener('resize',syncSheets);
 syncSheets();
 mbar.querySelectorAll('[data-panel]').forEach(btn=>btn.onclick=()=>openSheet(btn.dataset.panel));
 $('#mSave').onclick=()=>$('#saveBtn').click();
+
+/* swipe-down to dismiss a bottom sheet (grab the handle, or drag when scrolled to top) */
+function attachDrag(sheet){
+  let startY=0, active=false, engaged=false, fromHandle=false, pid=null;
+  sheet.addEventListener('pointerdown', e=>{
+    if(!isPhone() || !sheet.classList.contains('open')) return;
+    startY=e.clientY; active=true; engaged=false; pid=e.pointerId;
+    fromHandle=!!(e.target.closest && e.target.closest('.sheet-handle'));
+  });
+  sheet.addEventListener('pointermove', e=>{
+    if(!active || e.pointerId!==pid) return;
+    const dy=e.clientY-startY;
+    if(!engaged){
+      if(dy>6 && (fromHandle || sheet.scrollTop<=0)){
+        engaged=true; sheet.style.transition='none'; sheet.style.overflowY='hidden';
+        try{ sheet.setPointerCapture(pid); }catch(_){}
+      } else if(dy<-4 || sheet.scrollTop>0){ active=false; return; }
+    }
+    if(engaged){ sheet.style.transform='translateY('+Math.max(0,dy)+'px)'; if(e.cancelable) e.preventDefault(); }
+  }, {passive:false});
+  const end=e=>{
+    if(!active) return;
+    const dy=(e.clientY||startY)-startY;
+    active=false; sheet.style.overflowY=''; sheet.style.transition='';
+    try{ sheet.releasePointerCapture(pid); }catch(_){}
+    if(engaged && dy>90) sheet.classList.remove('open');
+    engaged=false; syncSheets(); updateBar();
+  };
+  sheet.addEventListener('pointerup', end);
+  sheet.addEventListener('pointercancel', end);
+}
+document.querySelectorAll('.side').forEach(s=>{
+  const h=document.createElement('div'); h.className='sheet-handle'; s.insertBefore(h, s.firstChild);
+  attachDrag(s);
+});
 
 /* ================= installable app (PWA) ================= */
 if('serviceWorker' in navigator){
