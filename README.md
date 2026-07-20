@@ -13,9 +13,12 @@ and are shared across every device that opens the site.
 
 - **Garments:** Dress, Top, Skirt, Pants, and **Jacket** (open-front blazer/coat
   with lapels, a collar, buttons, and long sleeves) — each fully editable.
-- **Dress form with optional arms:** the form is armless by default (keeps the
-  focus on the garment); turn **Arms** on so sleeves and jackets have something
-  to rest on and short sleeves show the arm below.
+- **Dress form with optional arms & legs:** the form is armless/legless by
+  default (keeps the focus on the garment); turn **Arms** on so sleeves rest
+  naturally, and add **Legs & shoes** (bare, flats, sneakers, boots, heels) for
+  full looks and footwear.
+- **Accessories:** hats (beanie, beret, cap, sun hat), a scarf, and necklaces
+  (gold, silver, pearl) — each with its own colour.
 - **Fabric (the star):** Cotton, Linen, Denim, Silk, Satin, Leather, Wool,
   Velvet, Sequin, Tulle — each with its own realistic sheen, roughness, and a
   woven **surface texture** (denim twill, knit ribbing, leather grain, etc.).

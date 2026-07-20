@@ -221,6 +221,10 @@
         <div class="opts" id="formOpts"></div>
       </div>
       <div class="sec">
+        <h2>Accessories</h2>
+        <div id="accessoryOpts"></div>
+      </div>
+      <div class="sec">
         <h2>Studio</h2>
         <div class="field"><label>Backdrop</label><div class="opts" id="bgOpts"></div></div>
         <div class="field"><label>Light</label><div class="opts" id="lightOpts"></div></div>
@@ -411,17 +415,75 @@ function buildForm(finish){
   formGroup.add(torso);
   const knob=new THREE.Mesh(new THREE.SphereGeometry(0.055,24,20),mat);knob.position.y=0.635;knob.castShadow=true;formGroup.add(knob);
   const poleMat=new THREE.MeshStandardMaterial({color:0x9a9ba2,roughness:.35,metalness:.9});
-  const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.022,0.022,0.82,20),poleMat);pole.position.y=-0.9;pole.castShadow=true;formGroup.add(pole);
-  const base=new THREE.Mesh(new THREE.CylinderGeometry(0.26,0.3,0.05,40),poleMat);base.position.y=-1.3;base.castShadow=true;base.receiveShadow=true;formGroup.add(base);
+  const legsOn=(typeof S!=='undefined' && S.legs && S.legs!=='none');
+  if(!legsOn){
+    const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.022,0.022,0.82,20),poleMat);pole.position.y=-0.9;pole.castShadow=true;formGroup.add(pole);
+    const base=new THREE.Mesh(new THREE.CylinderGeometry(0.26,0.3,0.05,40),poleMat);base.position.y=-1.3;base.castShadow=true;base.receiveShadow=true;formGroup.add(base);
+  }
   // optional arms (so sleeves have something to sit on)
   if(typeof S!=='undefined' && S.arms){
     [-1,1].forEach(sx=>{
-      // rounded shoulder cap + tapered arm in one, tucked under sleeves
       const arm=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.032,0.62,20),mat);
       arm.position.set(sx*0.185,0.13,0);arm.rotation.z=sx*0.05;arm.castShadow=true;arm.receiveShadow=true;formGroup.add(arm);
       const cap=new THREE.Mesh(new THREE.SphereGeometry(0.05,20,16),mat);cap.position.set(sx*0.185,0.44,0);cap.castShadow=true;formGroup.add(cap);
       const hand=new THREE.Mesh(new THREE.SphereGeometry(0.036,16,14),mat);hand.position.set(sx*0.205,-0.18,0);hand.castShadow=true;formGroup.add(hand);
     });
+  }
+  // optional legs + feet + shoes
+  if(legsOn){
+    const shoeMat=new THREE.MeshPhysicalMaterial({color:new THREE.Color(S.shoeColor||'#2a2118'),roughness:.45,metalness:.15,clearcoat:.5,clearcoatRoughness:.3});
+    const soleMat=new THREE.MeshStandardMaterial({color:0xf2efe9,roughness:.7});
+    const t=S.legs;
+    [-1,1].forEach(sx=>{
+      const fx=sx*0.088;
+      const leg=new THREE.Mesh(new THREE.CylinderGeometry(0.075,0.045,0.72,20),mat);
+      leg.position.set(fx,-0.87,0);leg.castShadow=true;leg.receiveShadow=true;formGroup.add(leg);
+      if(t==='bare'){
+        const foot=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.05,0.2),mat);foot.position.set(fx,-1.29,0.06);foot.castShadow=true;formGroup.add(foot);
+      } else if(t==='flats'){
+        const s=new THREE.Mesh(new THREE.BoxGeometry(0.086,0.055,0.22),shoeMat);s.position.set(fx,-1.285,0.06);s.castShadow=true;formGroup.add(s);
+      } else if(t==='sneakers'){
+        const s=new THREE.Mesh(new THREE.BoxGeometry(0.096,0.078,0.24),shoeMat);s.position.set(fx,-1.275,0.07);s.castShadow=true;formGroup.add(s);
+        const sole=new THREE.Mesh(new THREE.BoxGeometry(0.102,0.03,0.25),soleMat);sole.position.set(fx,-1.305,0.07);formGroup.add(sole);
+      } else if(t==='boots'){
+        const s=new THREE.Mesh(new THREE.BoxGeometry(0.09,0.075,0.22),shoeMat);s.position.set(fx,-1.28,0.06);s.castShadow=true;formGroup.add(s);
+        const shaft=new THREE.Mesh(new THREE.CylinderGeometry(0.074,0.07,0.36,18),shoeMat);shaft.position.set(fx,-1.07,-0.005);shaft.castShadow=true;formGroup.add(shaft);
+      } else if(t==='heels'){
+        const s=new THREE.Mesh(new THREE.BoxGeometry(0.072,0.048,0.23),shoeMat);s.position.set(fx,-1.25,0.06);s.rotation.x=-0.2;s.castShadow=true;formGroup.add(s);
+        const heel=new THREE.Mesh(new THREE.CylinderGeometry(0.013,0.013,0.12,10),shoeMat);heel.position.set(fx,-1.31,-0.035);heel.castShadow=true;formGroup.add(heel);
+      }
+    });
+  }
+  // ---- accessories (hat / scarf / necklace) ----
+  if(typeof S!=='undefined'){
+    if(S.hat && S.hat!=='none'){
+      const hc=S.hatColor||'#7a2233';
+      const hm=new THREE.MeshPhysicalMaterial({color:new THREE.Color(hc),roughness:.7,metalness:.05,clearcoat:.15,sheen:.4,sheenColor:new THREE.Color(shade(hc,.4)),side:THREE.DoubleSide});
+      if(S.hat==='beanie'){
+        const d=new THREE.Mesh(new THREE.SphereGeometry(0.073,24,18,0,Math.PI*2,0,Math.PI*0.62),hm);d.position.y=0.638;d.castShadow=true;formGroup.add(d);
+        const cuff=new THREE.Mesh(new THREE.TorusGeometry(0.067,0.015,10,28),hm);cuff.rotation.x=Math.PI/2;cuff.position.y=0.6;formGroup.add(cuff);
+      } else if(S.hat==='beret'){
+        const d=new THREE.Mesh(new THREE.SphereGeometry(0.1,24,18,0,Math.PI*2,0,Math.PI*0.44),hm);d.scale.y=0.5;d.position.y=0.66;d.rotation.z=0.18;d.castShadow=true;formGroup.add(d);
+      } else if(S.hat==='cap'){
+        const d=new THREE.Mesh(new THREE.SphereGeometry(0.071,24,18,0,Math.PI*2,0,Math.PI*0.55),hm);d.position.y=0.638;d.castShadow=true;formGroup.add(d);
+        const brim=new THREE.Mesh(new THREE.BoxGeometry(0.12,0.012,0.09),hm);brim.position.set(0,0.632,0.088);brim.castShadow=true;formGroup.add(brim);
+      } else if(S.hat==='sunhat'){
+        const brim=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,0.012,40),hm);brim.position.y=0.628;brim.castShadow=true;brim.receiveShadow=true;formGroup.add(brim);
+        const crown=new THREE.Mesh(new THREE.CylinderGeometry(0.075,0.082,0.075,28),hm);crown.position.y=0.665;crown.castShadow=true;formGroup.add(crown);
+      }
+    }
+    if(S.scarf && S.scarf!=='none'){
+      const sc=S.scarfColor||'#c4436a';
+      const sm=new THREE.MeshPhysicalMaterial({color:new THREE.Color(sc),roughness:.8,sheen:.5,sheenColor:new THREE.Color(shade(sc,.4)),side:THREE.DoubleSide});
+      const ring=new THREE.Mesh(new THREE.TorusGeometry(0.072,0.032,14,32),sm);ring.rotation.x=Math.PI/2;ring.position.y=0.5;ring.castShadow=true;formGroup.add(ring);
+      [-0.03,0.035].forEach(dx=>{const tail=new THREE.Mesh(new THREE.BoxGeometry(0.05,0.28,0.022),sm);tail.position.set(dx,0.36,0.078);tail.rotation.z=dx*1.5;tail.castShadow=true;formGroup.add(tail);});
+    }
+    if(S.necklace && S.necklace!=='none'){
+      const col=S.necklace==='silver'?0xd8dde3:S.necklace==='pearl'?0xf3ece2:0xe0b15a;
+      const nm=new THREE.MeshStandardMaterial({color:col,roughness:S.necklace==='pearl'?.35:.25,metalness:S.necklace==='pearl'?.1:.95});
+      const ring=new THREE.Mesh(new THREE.TorusGeometry(0.073,0.007,12,44),nm);ring.rotation.x=Math.PI/2;ring.position.y=0.498;ring.castShadow=true;formGroup.add(ring);
+      const pend=new THREE.Mesh(new THREE.SphereGeometry(0.016,16,14),nm);pend.position.set(0,0.44,0.072);pend.castShadow=true;formGroup.add(pend);
+    }
   }
   scene.add(formGroup);
 }
@@ -504,6 +566,7 @@ function makeFabricMat(fabricKey, color, printKind, printC1, printC2, printScale
 /* ================= state ================= */
 const DEFAULT_STATE=()=>({
   garment:'dress', form:'linen', arms:false, backdrop:'charcoal', light:'studio',
+  legs:'none', shoeColor:'#2a2118', hat:'none', hatColor:'#7a2233', scarf:'none', scarfColor:'#c4436a', necklace:'none',
   fabric:'satin', color:'#b7295a', finish:.45,
   print:'solid', printC1:'#ffffff', printC2:'#b7295a', printScale:1,
   length:'midi', flare:'aline', silhouette:'straight',
@@ -825,6 +888,22 @@ function renderLeftExtras(){
   [['studio','Studio'],['runway','Runway'],['soft','Soft'],['moody','Moody']].forEach(([k,l])=>{
     const b=document.createElement('div');b.className='opt'+(S.light===k?' active':'');b.textContent=l;
     b.onclick=()=>{S.light=k;setLight(k);renderLeftExtras();};lo.appendChild(b);});
+  renderAccessories();
+}
+function accColor(label,key){
+  const f=document.createElement('div');f.className='field';const l=document.createElement('label');l.textContent=label;f.appendChild(l);
+  f.appendChild(swatchRow(S[key],c=>{S[key]=c;buildForm(S.form);}));return f;
+}
+function renderAccessories(){
+  const el=$('#accessoryOpts');if(!el)return;el.innerHTML='';
+  const chg=()=>{buildForm(S.form);renderLeftExtras();};
+  el.appendChild(optRow('Legs & shoes',S.legs,[['none','None'],['bare','Bare'],['flats','Flats'],['sneakers','Sneakers'],['boots','Boots'],['heels','Heels']],k=>{S.legs=k;chg();},'Give the form legs & feet so it can wear footwear. Off keeps the classic legless dress form.'));
+  if(S.legs!=='none'&&S.legs!=='bare') el.appendChild(accColor('Shoe color','shoeColor'));
+  el.appendChild(optRow('Hat',S.hat,[['none','None'],['beanie','Beanie'],['beret','Beret'],['cap','Cap'],['sunhat','Sun hat']],k=>{S.hat=k;chg();},'A hat resting on the top of the form.'));
+  if(S.hat!=='none') el.appendChild(accColor('Hat color','hatColor'));
+  el.appendChild(optRow('Scarf',S.scarf,[['none','None'],['on','On']],k=>{S.scarf=k;chg();},'A scarf looped around the neck.'));
+  if(S.scarf!=='none') el.appendChild(accColor('Scarf color','scarfColor'));
+  el.appendChild(optRow('Necklace',S.necklace,[['none','None'],['gold','Gold'],['silver','Silver'],['pearl','Pearl']],k=>{S.necklace=k;chg();},'A necklace with a small pendant.'));
 }
 function setLight(k){
   const key=window._key;if(!key)return;
@@ -848,6 +927,8 @@ function wireClick(){
         const R=document.querySelector('.side.right'),L=document.querySelector('.side.left');
         L.classList.remove('open');R.classList.add('open');syncSheets();updateBar();
       }
+    } else if(window.matchMedia('(max-width:820px)').matches){
+      closeSheets(); // tapped empty space → dismiss any open sheet
     }
   });
 }
